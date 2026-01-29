@@ -232,30 +232,65 @@ async function scrapeProductListPage(
   const url = `https://africanfabs.com/collections/african-fabrics?page=${pageNum}`;
 
   try {
+    console.log(`    Navigating to: ${url}`);
     await page.goto(url, {
       waitUntil: "networkidle2",
-      timeout: 30000,
+      timeout: 60000,
     });
 
-    // Wait for product grid to load
-    await page.waitForSelector("a[href*='/products/']", { timeout: 10000 });
+    // Wait a bit for dynamic content
+    await delay(2000);
+
+    // Wait for product grid to load - try multiple selectors
+    try {
+      await page.waitForSelector("a[href*='/products/']", { timeout: 15000 });
+    } catch (e) {
+      // Try alternative selectors
+      console.log(`    Waiting for alternative selectors...`);
+      await page.waitForSelector("a[href*='products']", { timeout: 10000 }).catch(() => {});
+    }
 
     const { productUrls, hasNextPage, totalPages } = await page.evaluate(() => {
-      // Find all product links
-      const productLinks = Array.from(
-        document.querySelectorAll<HTMLAnchorElement>(
-          'a[href*="/products/"], a[href*="/collections/african-fabrics/products/"]'
-        )
+      // Find all product links - try multiple selectors
+      let productLinks: HTMLAnchorElement[] = [];
+      
+      // Method 1: Direct product links
+      const links1 = Array.from(
+        document.querySelectorAll<HTMLAnchorElement>('a[href*="/products/"]')
       );
+      productLinks.push(...links1);
+      
+      // Method 2: Collection product links
+      const links2 = Array.from(
+        document.querySelectorAll<HTMLAnchorElement>('a[href*="/collections/african-fabrics/products/"]')
+      );
+      productLinks.push(...links2);
+      
+      // Method 3: Any link with products in href
+      const links3 = Array.from(
+        document.querySelectorAll<HTMLAnchorElement>('a[href*="products"]')
+      );
+      productLinks.push(...links3);
 
-      const urls = productLinks
-        .map((link) => {
-          const href = link.href;
+      // Remove duplicates and filter
+      const uniqueLinks = new Map<string, HTMLAnchorElement>();
+      productLinks.forEach(link => {
+        const href = link.href || link.getAttribute('href') || '';
+        if (href && href.includes('/products/') && !href.includes('#') && !href.includes('javascript:')) {
+          uniqueLinks.set(href, link);
+        }
+      });
+
+      const urls = Array.from(uniqueLinks.keys())
+        .map((href) => {
           // Ensure full URL
           if (href.startsWith("/")) {
             return `https://africanfabs.com${href}`;
           }
-          return href;
+          if (href.startsWith("http")) {
+            return href;
+          }
+          return `https://africanfabs.com${href}`;
         })
         .filter((url, index, self) => self.indexOf(url) === index); // Remove duplicates
 
@@ -272,14 +307,15 @@ async function scrapeProductListPage(
       }
       
       // Method 2: Check pagination numbers
-      const paginationLinks = Array.from(document.querySelectorAll('a[href*="page="]'));
+      const paginationLinks = Array.from(document.querySelectorAll('a[href*="page="], span[class*="page"]'));
       const pageNumbers: number[] = [];
       paginationLinks.forEach(link => {
         const href = link.getAttribute('href') || '';
-        const pageMatch = href.match(/page=(\d+)/);
+        const text = link.textContent || '';
+        const pageMatch = href.match(/page=(\d+)/) || text.match(/(\d+)/);
         if (pageMatch) {
           const pageNum = parseInt(pageMatch[1], 10);
-          if (!isNaN(pageNum)) {
+          if (!isNaN(pageNum) && pageNum > 0 && pageNum < 100) {
             pageNumbers.push(pageNum);
           }
         }
@@ -290,6 +326,7 @@ async function scrapeProductListPage(
         const currentPageMatch = window.location.href.match(/page=(\d+)/);
         const currentPage = currentPageMatch ? parseInt(currentPageMatch[1], 10) : 1;
         hasNext = currentPage < totalPagesCount;
+        console.log(`[DEBUG] Found page numbers: ${pageNumbers.join(', ')}, max: ${totalPagesCount}, current: ${currentPage}`);
       }
       
       // Method 3: Check for "Next" text in pagination
@@ -307,9 +344,11 @@ async function scrapeProductListPage(
       };
     });
 
+    console.log(`    Found ${productUrls.length} product URLs on page ${pageNum}`);
     return { productUrls, hasNextPage, totalPages };
-  } catch (error) {
-    console.error(`Error scraping list page ${pageNum}:`, error);
+  } catch (error: any) {
+    console.error(`❌ Error scraping list page ${pageNum}:`, error.message);
+    console.error(`   Stack:`, error.stack);
     return { productUrls: [], hasNextPage: false, totalPages: 1 };
   }
 }
@@ -373,6 +412,18 @@ async function scrapeAllProducts(): Promise<ScrapeResult> {
     
     console.log(`     Found ${newUrls} new products (${productUrls.length} total on page, ${allProductUrls.length} unique total)`);
     
+    // Save URL collection progress every 5 pages
+    if (currentPage % 5 === 0 || !next) {
+      const tempResult: ScrapeResult = {
+        products: [],
+        totalPages: currentPage,
+        scrapedAt: new Date().toISOString(),
+      };
+      const tempPath = join(process.cwd(), "data", "scraped-products.json");
+      await writeFile(tempPath, JSON.stringify(tempResult, null, 2));
+      console.log(`  💾 URL collection progress saved (${allProductUrls.length} URLs collected)`);
+    }
+    
     hasNextPage = next;
     currentPage++;
 
@@ -384,12 +435,30 @@ async function scrapeAllProducts(): Promise<ScrapeResult> {
       console.log(`  ✅ Reached detected total pages (${detectedTotalPages})`);
       hasNextPage = false;
     }
+    
+    // Safety: if no new URLs found for 2 consecutive pages, stop
+    if (newUrls === 0 && currentPage > 2) {
+      console.log(`  ⚠️  No new URLs found on page ${currentPage}, stopping URL collection`);
+      hasNextPage = false;
+    }
   }
 
   console.log(`\n✅ URL Collection Complete!`);
   console.log(`   Total unique products found: ${allProductUrls.length}`);
   console.log(`   Pages processed: ${currentPage - 1}`);
-  console.log(`   Detected total pages: ${detectedTotalPages}\n`);
+  console.log(`   Detected total pages: ${detectedTotalPages}`);
+  
+  if (allProductUrls.length === 0) {
+    console.log(`\n❌ ERROR: No product URLs collected!`);
+    console.log(`   This might indicate:`);
+    console.log(`   - Website structure changed`);
+    console.log(`   - Selectors need updating`);
+    console.log(`   - Network/access issues`);
+    await browser.close();
+    throw new Error("No product URLs collected");
+  }
+  
+  console.log(`\n`);
 
   // Load existing products to resume
   const existingDataPath = join(process.cwd(), "data", "scraped-products.json");

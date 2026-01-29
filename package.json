@@ -11,7 +11,10 @@
     "typegen": "sanity typegen generate",
     "scrape": "tsx scripts/scrape-products.ts",
     "import": "tsx scripts/import-to-sanity.ts",
-    "progress": "tsx scripts/check-progress.ts"
+    "progress": "tsx scripts/check-progress.ts",
+    "cleanup": "tsx scripts/remove-duplicates.ts",
+    "stock": "tsx scripts/update-stock.ts",
+    "fix-data": "tsx scripts/fix-prices-and-categories.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.0.0",
@@ -21,12 +24,15 @@
     "@sanity/types": "^3.0.0",
     "@stripe/stripe-js": "^4.0.0",
     "@tanstack/react-query": "^5.0.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.563.0",
     "next": "^14.2.0",
     "next-sanity": "^6.0.0",
     "next-sanity-image": "^6.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "stripe": "^14.0.0",
+    "tailwind-merge": "^3.4.0",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

@@ -17,7 +17,12 @@ async function checkProgress() {
     console.log(`Total pages processed: ${data.totalPages}`);
     console.log(`Last updated: ${new Date(data.scrapedAt).toLocaleString()}`);
 
-    if (data.products.length > 0) {
+    if (data.products.length === 0) {
+      console.log("\n⏳ Status: URL Collection Phase");
+      console.log("   The scraper is currently collecting product URLs from all pages.");
+      console.log("   Individual product scraping will begin once all URLs are collected.");
+      console.log("   This typically takes 5-10 minutes for ~400 products.");
+    } else if (data.products.length > 0) {
       console.log("\n📦 Sample Products:");
       data.products.slice(0, 5).forEach((product: any, i: number) => {
         console.log(`  ${i + 1}. ${product.title.substring(0, 60)}...`);
@@ -27,10 +32,15 @@ async function checkProgress() {
       }
     }
 
-    // Estimate progress (assuming ~28 products per page)
+    // Estimate progress (assuming ~28 products per page, ~397 total)
     const estimatedTotal = 397;
     const progress = ((data.products.length / estimatedTotal) * 100).toFixed(1);
     console.log(`\n⏳ Estimated Progress: ${progress}%`);
+    
+    if (data.products.length === 0) {
+      console.log("   💡 Tip: Check terminal output to see URL collection progress");
+    }
+    
     console.log("=".repeat(50));
   } catch (error: any) {
     if (error.code === "ENOENT") {

@@ -45,8 +45,24 @@ const client = createClient({
 // Upload image to Sanity
 async function uploadImageToSanity(imageUrl: string): Promise<string | null> {
   try {
-    console.log(`  Uploading image: ${imageUrl}`);
-    const response = await globalThis.fetch(imageUrl);
+    // Fix protocol-relative URLs and invalid URLs
+    let fixedUrl = imageUrl;
+    if (fixedUrl.startsWith("//")) {
+      fixedUrl = `https:${fixedUrl}`;
+    }
+    if (!fixedUrl.startsWith("http")) {
+      console.warn(`  Skipping invalid URL: ${imageUrl}`);
+      return null;
+    }
+    
+    // Skip URLs with placeholders like {width}
+    if (fixedUrl.includes("{") || fixedUrl.includes("}")) {
+      console.warn(`  Skipping URL with placeholder: ${imageUrl}`);
+      return null;
+    }
+    
+    console.log(`  Uploading image: ${fixedUrl}`);
+    const response = await globalThis.fetch(fixedUrl);
     if (!response.ok) {
       console.warn(`  Failed to fetch image: ${response.statusText}`);
       return null;
