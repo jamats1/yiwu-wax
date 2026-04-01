@@ -19,7 +19,9 @@ const productQuery = groq`
     availability,
     material,
     colors,
-    stock
+    stock,
+    sku,
+    originalUrl
   }
 `;
 
@@ -34,35 +36,55 @@ export default async function ProductPage({
     notFound();
   }
 
+  const stock = typeof product.stock === "number" ? product.stock : 0;
+  const isSoldOut = product.availability === "sold_out" || stock <= 0;
+  const sixYardPrice = Number((product.price * 6).toFixed(2));
+  const purchaseOptions = [
+    {
+      id: "1-yard",
+      label: "1 yard",
+      price: product.price,
+    },
+    {
+      id: "6-yards",
+      label: "6 yards bundle",
+      price: sixYardPrice,
+    },
+  ];
+
   return (
-    <main className="min-h-screen bg-primary relative overflow-hidden w-full">
-      {/* Decorative background */}
-      <div className="absolute inset-0 bg-pattern-dots opacity-10 pointer-events-none" />
-      
-      <div className="w-full max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 md:py-16 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* Images */}
-          <div>
-            {product.images?.[0] && (
-              <div className="relative aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-accent/30">
-                <Image
-                  src={urlFor(product.images[0]).width(800).height(800).url()}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
+    <main className="min-h-screen bg-gray-50">
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
+          <section>
+            {product.images?.[0] ? (
+              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                <div className="relative aspect-square">
+                  <Image
+                    src={urlFor(product.images[0]).width(1200).height(1200).url()}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex aspect-square items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-400">
+                No image available
               </div>
             )}
+
             {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3 mt-4">
+              <div className="mt-4 grid grid-cols-4 gap-3">
                 {product.images.slice(1, 5).map((image: any, index: number) => (
                   <div
                     key={index}
-                    className="relative aspect-square rounded-lg overflow-hidden border-2 border-accent/20 hover:border-accent transition-colors cursor-pointer"
+                    className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-white"
                   >
                     <Image
-                      src={urlFor(image).width(200).height(200).url()}
-                      alt={`${product.name} ${index + 2}`}
+                      src={urlFor(image).width(240).height(240).url()}
+                      alt={`${product.name} image ${index + 2}`}
                       fill
                       className="object-cover"
                     />
@@ -70,56 +92,114 @@ export default async function ProductPage({
                 ))}
               </div>
             )}
-          </div>
+          </section>
 
-          {/* Product Info */}
-          <div className="bg-white rounded-xl p-8 shadow-2xl border-2 border-accent/20">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-primary">
-              {product.name}
-            </h1>
+          <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+              African Wax Print Fabric
+            </p>
+            <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">{product.name}</h1>
 
-            <div className="mb-8 pb-6 border-b-2 border-secondary/20">
-              <p className="text-4xl font-bold mb-2 text-primary">
+            <div className="mt-6 border-y border-gray-200 py-6">
+              <p className="text-4xl font-bold text-gray-900">
                 <PriceDisplay amount={product.price} baseCurrency={product.currency} />
               </p>
               {product.pricePerYard && (
-                <p className="text-secondary font-medium">{product.pricePerYard}</p>
+                <p className="mt-1 text-sm text-gray-600">{product.pricePerYard}</p>
               )}
             </div>
 
-            {product.description && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4 text-primary">Description</h2>
-                <p className="text-gray-700 whitespace-pre-line leading-relaxed">
-                  {product.description}
-                </p>
-              </div>
-            )}
+            <div className="mt-6 space-y-3 rounded-xl bg-gray-50 p-4">
+              <p className="text-sm text-gray-700">
+                {stock > 0 ? (
+                  <span>
+                    In stock - shipped in 1-2 business days.{" "}
+                    <span className="font-semibold">Only {stock} left.</span>
+                  </span>
+                ) : (
+                  <span className="font-semibold text-red-600">Sold out.</span>
+                )}
+              </p>
+              <p className="text-sm text-gray-600">
+                To order continuous yardage, select the preferred size and increase quantity.
+                Orders above 6 yards may be split into multiple 6-yard pieces.
+              </p>
+            </div>
 
-            <div className="mb-8 space-y-3 bg-primary/5 p-6 rounded-lg">
+            <div className="mt-6">
+              <AddToCartButton
+                product={product}
+                stock={stock}
+                soldOut={isSoldOut}
+                options={purchaseOptions}
+              />
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-3 rounded-xl border border-gray-200 p-4 sm:grid-cols-2">
+              {product.sku && (
+                <p className="text-sm">
+                  <span className="font-semibold text-gray-900">SKU:</span>{" "}
+                  <span className="text-gray-700">{product.sku}</span>
+                </p>
+              )}
               {product.material && (
-                <p className="flex items-center gap-2">
-                  <span className="font-bold text-primary">Material:</span>
-                  <span className="capitalize text-gray-700 font-medium">{product.material}</span>
+                <p className="text-sm">
+                  <span className="font-semibold text-gray-900">Material:</span>{" "}
+                  <span className="capitalize text-gray-700">{product.material}</span>
                 </p>
               )}
               {product.colors && product.colors.length > 0 && (
-                <p className="flex items-center gap-2">
-                  <span className="font-bold text-primary">Colors:</span>
-                  <span className="text-gray-700 font-medium">{product.colors.join(", ")}</span>
+                <p className="text-sm sm:col-span-2">
+                  <span className="font-semibold text-gray-900">Colors:</span>{" "}
+                  <span className="text-gray-700">{product.colors.join(", ")}</span>
                 </p>
               )}
+              {product.originalUrl && (
+                <a
+                  href={product.originalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium text-primary underline-offset-2 hover:underline sm:col-span-2"
+                >
+                  View original source listing
+                </a>
+              )}
             </div>
-
-            {product.availability === "sold_out" ? (
-              <div className="bg-red-100 text-red-800 px-6 py-4 rounded-xl font-semibold text-center border-2 border-red-300">
-                Sold Out
-              </div>
-            ) : (
-              <AddToCartButton product={product} />
-            )}
-          </div>
+          </section>
         </div>
+
+        <section className="mt-10 space-y-4 rounded-2xl border border-gray-200 bg-white p-6">
+          <details open>
+            <summary className="cursor-pointer text-lg font-semibold text-gray-900">Description</summary>
+            <p className="mt-3 whitespace-pre-line text-gray-700">
+              {product.description ||
+                "High quality African wax print fabric suitable for clothing, accessories, decor, and craft projects."}
+            </p>
+          </details>
+
+          <details>
+            <summary className="cursor-pointer text-lg font-semibold text-gray-900">
+              Size Guide & Yard Conversion
+            </summary>
+            <div className="mt-3 space-y-2 text-gray-700">
+              <p>1 yard = 91 cm</p>
+              <p>2 yards = 182 cm</p>
+              <p>3 yards = 274 cm</p>
+              <p>6 yards = 548 cm</p>
+            </div>
+          </details>
+
+          <details>
+            <summary className="cursor-pointer text-lg font-semibold text-gray-900">
+              Care & Return Notes
+            </summary>
+            <div className="mt-3 space-y-2 text-gray-700">
+              <p>Machine wash regular fabrics at max 40C. Do not tumble dry or bleach.</p>
+              <p>Expect up to 5% shrinkage for natural fibers.</p>
+              <p>Custom-cut fabric lengths are typically non-returnable.</p>
+            </div>
+          </details>
+        </section>
       </div>
     </main>
   );
