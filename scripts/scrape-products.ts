@@ -377,7 +377,7 @@ async function scrapeAllProducts(): Promise<ScrapeResult> {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   );
 
-  const allProducts: Product[] = [];
+  let allProducts: Product[] = [];
   let currentPage = 1;
   let hasNextPage = true;
   let detectedTotalPages = 14; // Default, will be updated

@@ -95,7 +95,7 @@ export function ProductFilters({ categories, maxPrice }: ProductFiltersProps) {
     [router, searchParams],
   );
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const searchQuery = formData.get("search") as string;
