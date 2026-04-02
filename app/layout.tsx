@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Yiwu Wax - African Fabrics",
   description: "High quality African fabrics and wax prints",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

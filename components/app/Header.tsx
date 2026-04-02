@@ -27,8 +27,13 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <Package className="h-6 w-6 text-accent" />
-            <span className="text-xl font-bold text-accent">Yiwu Wax</span>
+            <img
+              src="/logo.svg"
+              alt="Yiwu Wax"
+              width={140}
+              height={40}
+              className="h-8 w-auto"
+            />
           </Link>
 
           {/* Actions */}
