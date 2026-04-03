@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Package, ShoppingBag, User } from "lucide-react";
+import { ShoppingBag, User } from "lucide-react";
 import {
   SignedIn,
   SignedOut,
@@ -10,14 +10,14 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { useCartStore } from "@/lib/store/cart-store";
-import { useRouter } from "next/navigation";
 
 export function Header() {
   const itemCount = useCartStore((state) => state.getItemCount());
-  const router = useRouter();
+  const openCartTray = useCartStore((state) => state.openCartTray);
+  const isCartTrayOpen = useCartStore((state) => state.isCartTrayOpen);
 
   const handleCartClick = () => {
-    router.push("/cart");
+    openCartTray();
   };
 
   return (
@@ -51,9 +51,11 @@ export function Header() {
 
             {/* Cart Button */}
             <button
+              type="button"
               onClick={handleCartClick}
-              className="relative flex items-center gap-2 px-4 py-2 text-white hover:text-accent transition-colors font-medium"
+              className="relative flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-all hover:text-accent active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               aria-label={`Open cart (${itemCount} items)`}
+              aria-expanded={isCartTrayOpen}
             >
               <ShoppingBag className="h-5 w-5" />
               <span className="hidden sm:inline">Cart</span>

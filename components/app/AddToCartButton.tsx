@@ -1,6 +1,7 @@
 "use client";
 
-import { Minus, Plus, ShoppingBag } from "lucide-react";
+import { useState } from "react";
+import { Minus, Plus, ShoppingBag, Loader2 } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +24,11 @@ export function AddToCartButton({
   slug,
   className,
 }: AddToCartButtonProps) {
-  const { addItem, updateQuantity, items } = useCartStore();
+  const addItem = useCartStore((s) => s.addItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const items = useCartStore((s) => s.items);
+  const openCartTray = useCartStore((s) => s.openCartTray);
+  const [isAdding, setIsAdding] = useState(false);
   const cartItem = items.find((item) => item.id === productId);
 
   const quantityInCart = cartItem?.quantity ?? 0;
@@ -32,6 +37,7 @@ export function AddToCartButton({
 
   const handleAdd = () => {
     if (quantityInCart < stock) {
+      setIsAdding(true);
       addItem({
         id: productId,
         name,
@@ -41,6 +47,8 @@ export function AddToCartButton({
         image,
         quantity: 1,
       });
+      openCartTray();
+      window.setTimeout(() => setIsAdding(false), 350);
     }
   };
 
@@ -75,14 +83,20 @@ export function AddToCartButton({
   if (quantityInCart === 0) {
     return (
       <button
+        type="button"
         onClick={handleAdd}
+        disabled={isAdding}
         className={cn(
-          "w-full flex items-center justify-center gap-2 rounded-md bg-accent text-primary px-4 py-2 text-sm font-medium hover:bg-accent-light transition-colors",
+          "w-full flex items-center justify-center gap-2 rounded-md bg-accent text-primary px-4 py-2 text-sm font-medium hover:bg-accent-light transition-colors disabled:opacity-80",
           className
         )}
       >
-        <ShoppingBag className="h-4 w-4" />
-        Add to Basket
+        {isAdding ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : (
+          <ShoppingBag className="h-4 w-4" aria-hidden />
+        )}
+        {isAdding ? "Adding…" : "Add to Basket"}
       </button>
     );
   }

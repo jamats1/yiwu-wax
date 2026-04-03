@@ -16,11 +16,13 @@ function isLowStock(stock: number): boolean {
 }
 
 export function StockBadge({ productId, stock, className }: StockBadgeProps) {
-  const cartItem = useCartStore((state) => 
-    state.items.find((item) => item.id === productId)
+  const quantityInCart = useCartStore((state) =>
+    state.items
+      .filter(
+        (item) => item.id === productId || item.id.startsWith(`${productId}__`),
+      )
+      .reduce((sum, item) => sum + item.quantity, 0),
   );
-
-  const quantityInCart = cartItem?.quantity ?? 0;
   const isAtMax = quantityInCart >= stock && stock > 0;
   const lowStock = isLowStock(stock);
 

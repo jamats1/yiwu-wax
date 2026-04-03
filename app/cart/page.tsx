@@ -1,28 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import { useCartStore } from "@/lib/store/cart-store";
 import Image from "next/image";
 import Link from "next/link";
 import { urlFor } from "@/sanity/lib/image";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, getTotal, clearCart } =
-    useCartStore();
+  const { items, removeItem, updateQuantity, getTotal } = useCartStore();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const total = getTotal();
 
   const handleCheckout = () => {
+    setCheckoutLoading(true);
     router.push("/checkout");
   };
 
   if (items.length === 0) {
     return (
-      <main className="min-h-screen bg-primary relative overflow-hidden w-full">
+      <main className="min-h-screen bg-white relative overflow-hidden w-full">
         <div className="absolute inset-0 bg-pattern-dots opacity-10 pointer-events-none" />
         <div className="w-full max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 md:py-16 relative z-10">
-          <h1 className="text-5xl font-bold mb-8 text-white">Shopping Cart</h1>
+          <h1 className="text-4xl font-bold mb-8 text-gray-900 md:text-5xl">Shopping Cart</h1>
           <div className="text-center py-12 bg-white rounded-xl shadow-2xl p-12 border-2 border-accent/20">
             <p className="text-2xl text-gray-700 mb-6 font-medium">Your cart is empty</p>
             <Link
@@ -38,10 +41,10 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-primary relative overflow-hidden w-full">
+    <main className="min-h-screen bg-white relative overflow-hidden w-full">
       <div className="absolute inset-0 bg-pattern-dots opacity-10 pointer-events-none" />
       <div className="w-full max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 md:py-16 relative z-10">
-        <h1 className="text-5xl font-bold mb-8 text-white">Shopping Cart</h1>
+        <h1 className="text-4xl font-bold mb-8 text-gray-900 md:text-5xl">Shopping Cart</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -67,9 +70,9 @@ export default function CartPage() {
                         {item.name}
                       </h3>
                     </Link>
-                    <p className="text-primary font-semibold text-lg mb-4">
+                    <p className="mb-4 text-lg font-semibold text-gray-800">
                       {item.currency === "EUR" ? "€" : item.currency}{" "}
-                      {item.price}
+                      {item.price.toFixed(2)}
                     </p>
                     <div className="flex items-center gap-6">
                       <div className="flex items-center gap-3">
@@ -112,7 +115,7 @@ export default function CartPage() {
 
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-2xl p-8 sticky top-4 border-2 border-accent/20">
-              <h2 className="text-3xl font-bold mb-6 text-primary">Order Summary</h2>
+              <h2 className="mb-6 text-2xl font-bold text-gray-900 md:text-3xl">Order summary</h2>
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-gray-700">
                   <span className="font-medium">Subtotal</span>
@@ -122,24 +125,35 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between text-gray-700">
                   <span className="font-medium">Shipping</span>
-                  <span className="text-secondary">Calculated at checkout</span>
+                  <span className="text-sm font-medium text-gray-600">
+                    Calculated at checkout
+                  </span>
                 </div>
-                <div className="border-t-2 border-secondary/20 pt-4 mt-4">
-                  <div className="flex justify-between font-bold text-2xl text-primary">
+                <div className="border-t-2 border-gray-200 pt-4 mt-4">
+                  <div className="flex justify-between text-2xl font-bold text-gray-900">
                     <span>Total</span>
                     <span>€{total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={handleCheckout}
-                className="w-full bg-accent text-primary px-6 py-4 rounded-xl hover:bg-accent-light transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-primary/20 mb-4"
+                disabled={checkoutLoading}
+                className="mb-4 w-full rounded-xl border-2 border-primary/20 bg-accent px-6 py-4 text-lg font-bold text-primary shadow-lg transition-all duration-300 hover:bg-accent-light hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Proceed to Checkout
+                {checkoutLoading ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                    Loading…
+                  </span>
+                ) : (
+                  "Proceed to checkout"
+                )}
               </button>
               <Link
                 href="/products"
-                className="block text-center text-primary hover:text-accent font-semibold transition-colors"
+                className="block text-center text-sm font-semibold text-primary hover:text-primary-dark transition-colors"
               >
                 Continue Shopping
               </Link>

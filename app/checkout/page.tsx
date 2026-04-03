@@ -3,12 +3,13 @@
 import { useCartStore } from "@/lib/store/cart-store";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user, isSignedIn } = useUser();
-  const { items, getTotal, clearCart } = useCartStore();
+  const { user } = useUser();
+  const { items, getTotal } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: user?.emailAddresses[0]?.emailAddress || "",
@@ -20,6 +21,12 @@ export default function CheckoutPage() {
   });
 
   const total = getTotal();
+
+  useEffect(() => {
+    if (items.length === 0) {
+      router.replace("/cart");
+    }
+  }, [items.length, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,20 +59,28 @@ export default function CheckoutPage() {
   };
 
   if (items.length === 0) {
-    router.push("/cart");
-    return null;
+    return (
+      <main className="relative flex min-h-screen w-full items-center justify-center bg-white">
+        <p className="flex items-center gap-2 text-gray-600">
+          <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />
+          Redirecting to cart…
+        </p>
+      </main>
+    );
   }
 
   return (
-    <main className="min-h-screen bg-primary relative overflow-hidden w-full">
-      <div className="absolute inset-0 bg-pattern-dots opacity-10 pointer-events-none" />
+    <main className="min-h-screen bg-white relative overflow-hidden w-full">
+      <div className="absolute inset-0 bg-pattern-dots opacity-[0.06] pointer-events-none" />
       <div className="w-full max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 md:py-16 relative z-10">
-        <h1 className="text-5xl font-bold mb-8 text-white">Checkout</h1>
+        <h1 className="mb-8 text-4xl font-bold text-gray-900 md:text-5xl">Checkout</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-xl shadow-2xl p-8 border-2 border-accent/20">
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <h2 className="text-3xl font-bold mb-6 text-primary">Shipping Information</h2>
+              <h2 className="mb-6 text-2xl font-bold text-gray-900 md:text-3xl">
+                Shipping information
+              </h2>
 
               <div>
                 <label className="block text-sm font-bold mb-2 text-gray-700">Email</label>
@@ -76,7 +91,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full px-4 py-3 border-2 border-secondary/30 rounded-xl focus:border-accent focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -89,7 +104,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-4 py-3 border-2 border-secondary/30 rounded-xl focus:border-accent focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -102,7 +117,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, address: e.target.value })
                   }
-                  className="w-full px-4 py-3 border-2 border-secondary/30 rounded-xl focus:border-accent focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -116,7 +131,7 @@ export default function CheckoutPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
-                    className="w-full px-4 py-3 border-2 border-secondary/30 rounded-xl focus:border-accent focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
 
@@ -131,7 +146,7 @@ export default function CheckoutPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, postalCode: e.target.value })
                     }
-                    className="w-full px-4 py-3 border-2 border-secondary/30 rounded-xl focus:border-accent focus:outline-none transition-colors"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
               </div>
@@ -145,40 +160,50 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, country: e.target.value })
                   }
-                  className="w-full px-4 py-3 border-2 border-secondary/30 rounded-xl focus:border-accent focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-accent text-primary px-8 py-4 rounded-xl hover:bg-accent-light transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 border-2 border-primary/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-primary/20 bg-accent px-8 py-4 text-lg font-bold text-primary shadow-lg transition-all duration-300 hover:bg-accent-light hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Processing..." : "Proceed to Payment"}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                    Processing…
+                  </>
+                ) : (
+                  "Proceed to payment"
+                )}
               </button>
             </form>
           </div>
 
           <div>
-            <div className="bg-white rounded-xl shadow-2xl p-8 sticky top-4 border-2 border-accent/20">
-              <h2 className="text-3xl font-bold mb-6 text-primary">Order Summary</h2>
+            <div className="sticky top-4 rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
+              <h2 className="mb-6 text-2xl font-bold text-gray-900 md:text-3xl">Order summary</h2>
               <div className="space-y-3 mb-6">
                 {items.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm py-2 border-b border-secondary/20">
-                    <span className="text-gray-700 font-medium">
-                      {item.name} x{item.quantity}
+                  <div key={item.id} className="flex justify-between gap-4 border-b border-gray-100 py-3 text-sm last:border-0">
+                    <span className="font-medium text-gray-800">
+                      {item.name} ×{item.quantity}
                     </span>
-                    <span className="font-bold text-primary">
+                    <span className="shrink-0 font-semibold text-gray-900">
                       €{(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="border-t-2 border-secondary/20 pt-4 mt-4">
-                <div className="flex justify-between font-bold text-2xl text-primary">
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                <div className="flex justify-between text-2xl font-bold text-gray-900">
                   <span>Total</span>
                   <span>€{total.toFixed(2)}</span>
                 </div>
+                <p className="mt-3 text-sm text-gray-600">
+                  Shipping and taxes are finalized on the payment step.
+                </p>
               </div>
             </div>
           </div>

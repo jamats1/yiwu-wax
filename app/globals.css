@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background: #286F3E; /* Deep forest green */
-  --foreground: #FFFFFF;
+  --foreground-rgb: 17, 24, 39; /* gray-900 — readable default on light pages */
+  --background: #ffffff;
+  --foreground: #111827;
 }
 
 html,
@@ -17,7 +17,7 @@ body {
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: #f9fafb;
+  background: #ffffff;
   min-height: 100vh;
 }
 

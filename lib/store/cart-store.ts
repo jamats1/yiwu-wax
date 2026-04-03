@@ -13,6 +13,10 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
+  /** Slide-over cart preview; not persisted */
+  isCartTrayOpen: boolean;
+  openCartTray: () => void;
+  closeCartTray: () => void;
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -25,6 +29,9 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      isCartTrayOpen: false,
+      openCartTray: () => set({ isCartTrayOpen: true }),
+      closeCartTray: () => set({ isCartTrayOpen: false }),
       addItem: (item) => {
         const existingItem = get().items.find((i) => i.id === item.id);
         if (existingItem) {
@@ -71,6 +78,7 @@ export const useCartStore = create<CartStore>()(
     {
       name: "cart-storage",
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ items: state.items }),
     }
   )
 );

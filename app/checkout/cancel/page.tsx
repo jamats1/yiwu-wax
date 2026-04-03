@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function CheckoutCancelPage() {
   return (
-    <main className="min-h-screen bg-primary relative overflow-hidden w-full">
+    <main className="min-h-screen bg-white relative overflow-hidden w-full">
       <div className="absolute inset-0 bg-pattern-dots opacity-10 pointer-events-none" />
       <div className="w-full max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 md:py-16 relative z-10">
         <div className="max-w-2xl mx-auto text-center">

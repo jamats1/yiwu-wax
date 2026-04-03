@@ -145,8 +145,6 @@ export function ProductFilters({ categories, maxPrice }: ProductFiltersProps) {
     </div>
   );
 
-  const [selectOpen, setSelectOpen] = useState<Record<string, boolean>>({});
-
   return (
     <div className="space-y-6 border-r border-gray-200 pr-6">
       {/* Clear Filters - Show at top when active */}

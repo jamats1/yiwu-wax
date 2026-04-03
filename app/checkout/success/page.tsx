@@ -18,7 +18,7 @@ export default function CheckoutSuccessPage() {
   }, [sessionId, clearCart]);
 
   return (
-    <main className="min-h-screen bg-primary relative overflow-hidden w-full">
+    <main className="min-h-screen bg-white relative overflow-hidden w-full">
       <div className="absolute inset-0 bg-pattern-dots opacity-10 pointer-events-none" />
       <div className="w-full max-w-7xl mx-auto px-6 md:px-8 lg:px-12 py-12 md:py-16 relative z-10">
         <div className="max-w-2xl mx-auto text-center">
@@ -31,7 +31,9 @@ export default function CheckoutSuccessPage() {
               </div>
             </div>
             <h1 className="text-4xl font-bold mb-4 text-primary">Payment Successful!</h1>
-            <p className="text-lg text-gray-700 mb-6">Thank you for your order. We'll send you a confirmation email shortly.</p>
+            <p className="text-lg text-gray-700 mb-6">
+              Thank you for your order. We&apos;ll send you a confirmation email shortly.
+            </p>
 
             {sessionId && (
               <p className="text-sm text-secondary font-medium mb-6 bg-primary/5 px-4 py-2 rounded-lg inline-block">

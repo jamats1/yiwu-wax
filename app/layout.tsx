@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Header } from "@/components/app/Header";
+import { CartTray } from "@/components/app/CartTray";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
   title: "Yiwu Wax - African Fabrics",
   description: "High quality African fabrics and wax prints",
   icons: {
-    icon: "/favicon.ico",
+    icon: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
   },
 };
 
@@ -24,6 +27,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={inter.className}>
           <Header />
+          <CartTray />
           {children}
         </body>
       </html>

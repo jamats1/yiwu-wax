@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { Check, Loader2 } from "lucide-react";
 
 interface Product {
   _id: string;
@@ -35,10 +37,14 @@ export default function AddToCartButton({
   className,
 }: AddToCartButtonProps) {
   const addItem = useCartStore((state) => state.addItem);
+  const openCartTray = useCartStore((state) => state.openCartTray);
   const [selectedOptionId, setSelectedOptionId] = useState<string>(
     options?.[0]?.id || "default",
   );
   const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isBuying, setIsBuying] = useState(false);
+  const router = useRouter();
 
   const parsedStock = Number.isFinite(stock) ? Math.max(0, stock) : 0;
   const maxQuantity = parsedStock > 0 ? Math.min(parsedStock, 100) : 100;
@@ -46,18 +52,23 @@ export default function AddToCartButton({
     () => new Map((options || []).map((option) => [option.id, option])),
     [options],
   );
-  const selectedOption = optionMap.get(selectedOptionId);
+  const hasOptions = Boolean(options && options.length > 0);
+  const selectedOption = hasOptions ? optionMap.get(selectedOptionId) : undefined;
   const unitPrice = selectedOption?.price ?? product.price;
   const cartName = selectedOption
     ? `${product.name} (${selectedOption.label})`
     : product.name;
-  const isUnavailable = soldOut || parsedStock <= 0;
+  const lineId = hasOptions ? `${product._id}__${selectedOptionId}` : product._id;
+  const variantReady = !hasOptions || Boolean(selectedOption);
+  const isUnavailable = soldOut || parsedStock <= 0 || !variantReady;
 
   const handleAddToCart = () => {
-    if (isUnavailable) return;
+    if (isUnavailable || isAdding || isBuying) return;
+
+    setIsAdding(true);
 
     addItem({
-      id: product._id,
+      id: lineId,
       name: cartName,
       slug: product.slug.current,
       price: unitPrice,
@@ -65,6 +76,31 @@ export default function AddToCartButton({
       image: product.images[0],
       quantity,
     });
+
+    openCartTray();
+    // UX: give immediate feedback even though add-to-cart is synchronous.
+    window.setTimeout(() => setIsAdding(false), 500);
+  };
+
+  const handleBuyNow = async () => {
+    if (isUnavailable || isAdding || isBuying) return;
+    setIsBuying(true);
+
+    addItem({
+      id: lineId,
+      name: cartName,
+      slug: product.slug.current,
+      price: unitPrice,
+      currency: product.currency,
+      image: product.images[0],
+      quantity,
+    });
+
+    try {
+      router.push("/checkout");
+    } finally {
+      window.setTimeout(() => setIsBuying(false), 400);
+    }
   };
 
   return (
@@ -113,18 +149,54 @@ export default function AddToCartButton({
         </select>
       </div>
 
-      <button
-        onClick={handleAddToCart}
-        disabled={isUnavailable}
-        className={cn(
-          "w-full rounded-xl px-8 py-4 font-bold text-lg shadow-lg border-2 transition-all duration-300",
-          isUnavailable
-            ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-500"
-            : "border-primary/20 bg-accent text-primary hover:bg-accent-light hover:shadow-xl",
-        )}
-      >
-        {isUnavailable ? "Sold Out" : "Add to Cart"}
-      </button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          onClick={handleAddToCart}
+          disabled={isUnavailable || isAdding || isBuying}
+          className={cn(
+            "w-full rounded-xl px-8 py-4 font-bold text-lg shadow-lg border-2 transition-all duration-300",
+            isUnavailable
+              ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-500"
+              : "border-primary/20 bg-accent text-primary hover:bg-accent-light hover:shadow-xl",
+          )}
+        >
+          {isUnavailable ? (
+            "Sold Out"
+          ) : isAdding ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Adding...
+            </span>
+          ) : (
+            "Add to Cart"
+          )}
+        </button>
+
+        <button
+          onClick={handleBuyNow}
+          disabled={isUnavailable || isAdding || isBuying}
+          className={cn(
+            "w-full rounded-xl px-8 py-4 font-bold text-lg shadow-lg border-2 transition-all duration-300",
+            isUnavailable
+              ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-500"
+              : "border-primary/20 bg-primary text-white hover:bg-primary-dark hover:shadow-xl",
+          )}
+        >
+          {isUnavailable ? (
+            "Sold Out"
+          ) : isBuying ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Buying...
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              <Check className="h-5 w-5" />
+              Buy Now
+            </span>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
