@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useCartStore } from "@/lib/store/cart-store";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
 
 interface Product {
   _id: string;
@@ -29,6 +29,14 @@ interface AddToCartButtonProps {
   className?: string;
 }
 
+function currencySymbol(code: string): string {
+  const c = code?.toUpperCase() ?? "EUR";
+  if (c === "EUR") return "€";
+  if (c === "USD") return "$";
+  if (c === "GBP") return "£";
+  return "€";
+}
+
 export default function AddToCartButton({
   product,
   stock = 0,
@@ -47,7 +55,7 @@ export default function AddToCartButton({
   const router = useRouter();
 
   const parsedStock = Number.isFinite(stock) ? Math.max(0, stock) : 0;
-  const maxQuantity = parsedStock > 0 ? Math.min(parsedStock, 100) : 100;
+  const maxQuantity = parsedStock > 0 ? Math.min(parsedStock, 100) : 1;
   const optionMap = useMemo(
     () => new Map((options || []).map((option) => [option.id, option])),
     [options],
@@ -61,6 +69,14 @@ export default function AddToCartButton({
   const lineId = hasOptions ? `${product._id}__${selectedOptionId}` : product._id;
   const variantReady = !hasOptions || Boolean(selectedOption);
   const isUnavailable = soldOut || parsedStock <= 0 || !variantReady;
+  const sym = currencySymbol(product.currency);
+
+  const bumpQty = (delta: number) => {
+    setQuantity((q) => {
+      const next = q + delta;
+      return Math.min(maxQuantity, Math.max(1, next));
+    });
+  };
 
   const handleAddToCart = () => {
     if (isUnavailable || isAdding || isBuying) return;
@@ -104,96 +120,129 @@ export default function AddToCartButton({
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-5", className)}>
       {options && options.length > 0 && (
-        <div>
-          <label
-            htmlFor="purchase-option"
-            className="mb-2 block text-sm font-semibold text-primary"
+        <fieldset>
+          <legend className="mb-2 text-sm font-semibold text-gray-900">Yard size</legend>
+          <div
+            className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"
+            role="radiogroup"
+            aria-label="Yard size"
           >
-            Select size
-          </label>
-          <select
-            id="purchase-option"
-            value={selectedOptionId}
-            onChange={(event) => setSelectedOptionId(event.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none"
-          >
-            {options.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.label} - €{option.price.toFixed(2)}
-              </option>
-            ))}
-          </select>
-        </div>
+            {options.map((option) => {
+              const selected = selectedOptionId === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setSelectedOptionId(option.id)}
+                  className={cn(
+                    "min-h-[48px] flex-1 rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold transition sm:min-w-[140px] sm:flex-none",
+                    selected
+                      ? "border-primary bg-primary/[0.08] text-primary shadow-sm"
+                      : "border-gray-200 bg-white text-gray-800 hover:border-gray-300",
+                  )}
+                >
+                  <span className="block">{option.label}</span>
+                  <span className="mt-0.5 block text-xs font-normal text-gray-600">
+                    {formatPrice(option.price, sym)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
       )}
 
       <div>
-        <label
-          htmlFor="purchase-quantity"
-          className="mb-2 block text-sm font-semibold text-primary"
-        >
+        <span className="mb-2 block text-sm font-semibold text-gray-900" id="qty-label">
           Quantity
-        </label>
-        <select
-          id="purchase-quantity"
-          value={quantity}
-          onChange={(event) => setQuantity(Number(event.target.value))}
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none"
-        >
-          {Array.from({ length: maxQuantity }, (_, index) => index + 1).map((count) => (
-            <option key={count} value={count}>
-              {count}
-            </option>
-          ))}
-        </select>
+        </span>
+        <div className="flex max-w-xs items-stretch gap-2">
+          <button
+            type="button"
+            onClick={() => bumpQty(-1)}
+            disabled={isUnavailable || quantity <= 1}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-gray-200 bg-white text-gray-800 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Decrease quantity"
+          >
+            <Minus className="h-5 w-5" aria-hidden />
+          </button>
+          <div
+            className="flex min-w-[3rem] flex-1 items-center justify-center rounded-xl border-2 border-gray-200 bg-gray-50 text-lg font-bold text-gray-900"
+            aria-live="polite"
+            role="status"
+            aria-labelledby="qty-label"
+          >
+            {quantity}
+          </div>
+          <button
+            type="button"
+            onClick={() => bumpQty(1)}
+            disabled={isUnavailable || quantity >= maxQuantity}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-gray-200 bg-white text-gray-800 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Increase quantity"
+          >
+            <Plus className="h-5 w-5" aria-hidden />
+          </button>
+        </div>
+        {parsedStock > 0 && (
+          <p className="mt-1.5 text-xs text-gray-500">Max {maxQuantity} for this listing</p>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
+          type="button"
           onClick={handleAddToCart}
           disabled={isUnavailable || isAdding || isBuying}
           className={cn(
-            "w-full rounded-xl px-8 py-4 font-bold text-lg shadow-lg border-2 transition-all duration-300",
+            "inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border-2 px-6 py-3.5 text-base font-bold shadow-md transition-all duration-200 sm:text-lg",
             isUnavailable
               ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-500"
-              : "border-primary/20 bg-accent text-primary hover:bg-accent-light hover:shadow-xl",
+              : "border-primary/25 bg-accent text-primary hover:bg-accent-light hover:shadow-lg active:scale-[0.99]",
           )}
         >
           {isUnavailable ? (
-            "Sold Out"
+            "Sold out"
           ) : isAdding ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Adding...
-            </span>
+            <>
+              <Loader2 className="h-5 w-5 animate-spin shrink-0" aria-hidden />
+              Adding…
+            </>
           ) : (
-            "Add to Cart"
+            <>
+              <ShoppingBag className="h-5 w-5 shrink-0" aria-hidden />
+              Add to basket
+            </>
           )}
         </button>
 
         <button
+          type="button"
           onClick={handleBuyNow}
           disabled={isUnavailable || isAdding || isBuying}
           className={cn(
-            "w-full rounded-xl px-8 py-4 font-bold text-lg shadow-lg border-2 transition-all duration-300",
+            "inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl border-2 px-6 py-3.5 text-base font-bold shadow-md transition-all duration-200 sm:text-lg",
             isUnavailable
               ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-500"
-              : "border-primary/20 bg-primary text-white hover:bg-primary-dark hover:shadow-xl",
+              : "border-primary/30 bg-primary text-white hover:bg-primary-dark hover:shadow-lg active:scale-[0.99]",
           )}
         >
           {isUnavailable ? (
-            "Sold Out"
+            "Sold out"
           ) : isBuying ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Buying...
-            </span>
+            <>
+              <Loader2 className="h-5 w-5 animate-spin shrink-0" aria-hidden />
+              Redirecting…
+            </>
           ) : (
-            <span className="inline-flex items-center gap-2">
-              <Check className="h-5 w-5" />
-              Buy Now
-            </span>
+            <>
+              <Check className="h-5 w-5 shrink-0" aria-hidden />
+              Buy now
+            </>
           )}
         </button>
       </div>
