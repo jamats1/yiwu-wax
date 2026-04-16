@@ -36,6 +36,12 @@ export function Header() {
             />
           </Link>
 
+          <nav className="hidden sm:flex items-center gap-4 text-sm font-medium text-white/90">
+            <Link href="/faq" className="hover:text-accent transition-colors">
+              FAQ
+            </Link>
+          </nav>
+
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
             {/* My Orders - Only when signed in */}
