@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useCartStore } from "@/lib/store/cart-store";
-import { cn, formatPrice } from "@/lib/utils";
-import { getCurrencySymbol, SITE_CURRENCY } from "@/lib/currency";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
 
@@ -16,36 +15,22 @@ interface Product {
   images: any[];
 }
 
-interface PurchaseOption {
-  id: string;
-  label: string;
-  price: number;
-}
-
 interface AddToCartButtonProps {
   product: Product;
   stock?: number;
   soldOut?: boolean;
-  options?: PurchaseOption[];
   className?: string;
 }
 
-function currencySymbol(code: string): string {
-  return getCurrencySymbol(code || SITE_CURRENCY);
-}
 
 export default function AddToCartButton({
   product,
   stock = 0,
   soldOut = false,
-  options,
   className,
 }: AddToCartButtonProps) {
   const addItem = useCartStore((state) => state.addItem);
   const openCartTray = useCartStore((state) => state.openCartTray);
-  const [selectedOptionId, setSelectedOptionId] = useState<string>(
-    options?.[0]?.id || "default",
-  );
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
@@ -53,20 +38,10 @@ export default function AddToCartButton({
 
   const parsedStock = Number.isFinite(stock) ? Math.max(0, stock) : 0;
   const maxQuantity = parsedStock > 0 ? Math.min(parsedStock, 100) : 1;
-  const optionMap = useMemo(
-    () => new Map((options || []).map((option) => [option.id, option])),
-    [options],
-  );
-  const hasOptions = Boolean(options && options.length > 0);
-  const selectedOption = hasOptions ? optionMap.get(selectedOptionId) : undefined;
-  const unitPrice = selectedOption?.price ?? product.price;
-  const cartName = selectedOption
-    ? `${product.name} (${selectedOption.label})`
-    : product.name;
-  const lineId = hasOptions ? `${product._id}__${selectedOptionId}` : product._id;
-  const variantReady = !hasOptions || Boolean(selectedOption);
-  const isUnavailable = soldOut || !variantReady;
-  const sym = currencySymbol(product.currency);
+  const unitPrice = product.price;
+  const cartName = product.name;
+  const lineId = product._id;
+  const isUnavailable = soldOut;
 
   const bumpQty = (delta: number) => {
     setQuantity((q) => {
@@ -118,41 +93,6 @@ export default function AddToCartButton({
 
   return (
     <div className={cn("space-y-5", className)}>
-      {options && options.length > 0 && (
-        <fieldset>
-          <legend className="mb-2 text-sm font-semibold text-gray-900">Yard size</legend>
-          <div
-            className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"
-            role="radiogroup"
-            aria-label="Yard size"
-          >
-            {options.map((option) => {
-              const selected = selectedOptionId === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  onClick={() => setSelectedOptionId(option.id)}
-                  className={cn(
-                    "min-h-[48px] flex-1 rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold transition sm:min-w-[140px] sm:flex-none",
-                    selected
-                      ? "border-primary bg-primary/[0.08] text-primary shadow-sm"
-                      : "border-gray-200 bg-white text-gray-800 hover:border-gray-300",
-                  )}
-                >
-                  <span className="block">{option.label}</span>
-                  <span className="mt-0.5 block text-xs font-normal text-gray-600">
-                    {formatPrice(option.price, sym)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-      )}
-
       <div>
         <span className="mb-2 block text-sm font-semibold text-gray-900" id="qty-label">
           Quantity

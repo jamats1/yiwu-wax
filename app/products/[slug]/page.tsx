@@ -110,19 +110,8 @@ export default async function ProductPage({
 
   const stock = typeof product.stock === "number" ? product.stock : 0;
   const isSoldOut = product.availability === "sold_out" || (product.availability !== "in_stock" && stock <= 0);
-  const sixYardPrice = Number((product.price * 6).toFixed(2));
-  const purchaseOptions = [
-    {
-      id: "1-yard",
-      label: "1 yard",
-      price: product.price,
-    },
-    {
-      id: "6-yards",
-      label: "6 yards bundle",
-      price: sixYardPrice,
-    },
-  ];
+  // Each product is a pre-cut 6-yard piece. The price in Sanity is for the full cloth.
+  const perYardPrice = Number((product.price / 6).toFixed(2));
 
   const galleryUrls: string[] = (product.images ?? []).map((img: { asset?: { _ref?: string } }) =>
     urlFor(img).width(1200).height(1200).url(),
@@ -185,13 +174,13 @@ export default async function ProductPage({
             </h1>
 
             <div className="mt-5 rounded-xl bg-gray-50 px-4 py-4 sm:px-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">From</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Price · 6-yard piece</p>
               <p className="mt-1 text-3xl font-bold text-gray-900 sm:text-4xl">
                 <PriceDisplay amount={product.price} baseCurrency={product.currency} />
               </p>
-              {product.pricePerYard && (
-                <p className="mt-1 text-sm text-gray-600">{product.pricePerYard}</p>
-              )}
+              <p className="mt-1 text-sm text-gray-500">
+                (~<PriceDisplay amount={perYardPrice} baseCurrency={product.currency} /> per yard)
+              </p>
             </div>
 
             <ul className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3" role="list">
@@ -226,7 +215,7 @@ export default async function ProductPage({
                 )}
               </p>
               <p className="text-gray-600">
-                Choose yard size, then set quantity. Orders over 6 yards may ship as multiple pieces.
+                Each piece is a standard 6-yard cut. Order multiple pieces if you need more.
               </p>
             </div>
 
@@ -235,7 +224,6 @@ export default async function ProductPage({
                 product={product}
                 stock={stock}
                 soldOut={isSoldOut}
-                options={purchaseOptions}
               />
             </div>
 
@@ -273,13 +261,12 @@ export default async function ProductPage({
 
           <details>
             <summary className="cursor-pointer text-lg font-semibold text-gray-900">
-              Size Guide & Yard Conversion
+              Fabric Size & Measurements
             </summary>
             <div className="mt-3 space-y-2 text-gray-700">
-              <p>1 yard = 91 cm</p>
-              <p>2 yards = 182 cm</p>
-              <p>3 yards = 274 cm</p>
-              <p>6 yards = 548 cm</p>
+              <p><strong>Each piece:</strong> 6 yards (548 cm / approximately 5.5 m)</p>
+              <p><strong>Width:</strong> standard wax print width ~115 cm (45 inches)</p>
+              <p>6 yards is the standard African wax print bolt — enough for a full outfit or dress set.</p>
             </div>
           </details>
 
@@ -290,7 +277,7 @@ export default async function ProductPage({
             <div className="mt-3 space-y-2 text-gray-700">
               <p>Machine wash regular fabrics at max 40C. Do not tumble dry or bleach.</p>
               <p>Expect up to 5% shrinkage for natural fibers.</p>
-              <p>Custom-cut fabric lengths are typically non-returnable.</p>
+              <p>Fabric is non-returnable once cut or used. Inspect on receipt and contact us within 48 hours for any issues.</p>
             </div>
           </details>
         </section>
