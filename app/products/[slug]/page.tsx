@@ -7,9 +7,11 @@ import { ChevronRight, Package, RotateCcw, Truck } from "lucide-react";
 import AddToCartButton from "@/components/AddToCartButton";
 import { PriceDisplay } from "@/components/app/PriceDisplay";
 import { ProductImageGallery } from "@/components/app/ProductImageGallery";
+import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
 const productQuery = groq`
-  *[_type == "product" && slug.current == $slug][0] {
+  *[_type == "product" && slug.current == $slug && active != false][0] {
     _id,
     name,
     slug,
@@ -22,24 +24,83 @@ const productQuery = groq`
     material,
     colors,
     stock,
-    sku,
-    originalUrl
+    sku
   }
 `;
+
+async function getProduct(slug: string) {
+  return client.fetch(productQuery, { slug });
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const product = await getProduct(params.slug);
+  if (!product) return {};
+
+  const siteUrl = getSiteUrl();
+  const title = product.name;
+  const description = product.description
+    ? product.description.slice(0, 160)
+    : `Buy ${product.name} — premium African wax print fabric, sold by the yard. Fast dispatch from Yiwu Wax.`;
+  const canonicalUrl = `${siteUrl}/products/${product.slug.current}`;
+  const ogImage = product.images?.[0]
+    ? urlFor(product.images[0]).width(1200).height(630).url()
+    : undefined;
+
+  const inStock =
+    product.availability === "in_stock" ||
+    (product.availability !== "sold_out" && (product.stock ?? 0) > 0);
+  const currency = product.currency || "USD";
+
+  return {
+    title,
+    description,
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: "Yiwu Wax",
+      type: "website",
+      ...(ogImage && {
+        images: [{ url: ogImage, width: 1200, height: 630, alt: product.name }],
+      }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(ogImage && { images: [ogImage] }),
+    },
+    // Facebook/Instagram product-specific Open Graph tags used by Meta Catalog
+    other: {
+      "og:type": "product",
+      "product:price:amount": String(product.price),
+      "product:price:currency": currency,
+      "product:availability": inStock ? "in stock" : "out of stock",
+      "product:condition": "new",
+      "product:brand": "Yiwu Wax",
+      "product:retailer_item_id": product.sku || product._id,
+    },
+  };
+}
 
 export default async function ProductPage({
   params,
 }: {
   params: { slug: string };
 }) {
-  const product = await client.fetch(productQuery, { slug: params.slug });
+  const product = await getProduct(params.slug);
 
   if (!product) {
     notFound();
   }
 
   const stock = typeof product.stock === "number" ? product.stock : 0;
-  const isSoldOut = product.availability === "sold_out" || stock <= 0;
+  const isSoldOut = product.availability === "sold_out" || (product.availability !== "in_stock" && stock <= 0);
   const sixYardPrice = Number((product.price * 6).toFixed(2));
   const purchaseOptions = [
     {
@@ -58,7 +119,35 @@ export default async function ProductPage({
     urlFor(img).width(1200).height(1200).url(),
   );
 
+  const siteUrl = getSiteUrl();
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    ...(product.description && { description: product.description }),
+    ...(product.sku && { sku: product.sku }),
+    ...(galleryUrls.length > 0 && { image: galleryUrls }),
+    brand: { "@type": "Brand", name: "Yiwu Wax" },
+    offers: {
+      "@type": "Offer",
+      url: `${siteUrl}/products/${product.slug.current}`,
+      price: product.price,
+      priceCurrency: product.currency || "USD",
+      availability: isSoldOut
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: "Yiwu Wax" },
+    },
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-8 sm:pb-12">
       <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6 lg:px-8 lg:pt-8">
         <nav className="mb-6 flex flex-wrap items-center gap-1 text-sm text-gray-600" aria-label="Breadcrumb">
@@ -116,10 +205,10 @@ export default async function ProductPage({
               role="status"
             >
               <p className="font-medium text-gray-900">
-                {stock > 0 ? (
+                {!isSoldOut ? (
                   <>
                     In stock
-                    {stock <= 10 ? (
+                    {stock > 0 && stock <= 10 ? (
                       <span className="text-amber-800"> — only {stock} left</span>
                     ) : null}
                   </>
@@ -160,16 +249,6 @@ export default async function ProductPage({
                   <span className="text-gray-700">{product.colors.join(", ")}</span>
                 </p>
               )}
-              {product.originalUrl && (
-                <a
-                  href={product.originalUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm font-medium text-primary underline-offset-2 hover:underline sm:col-span-2"
-                >
-                  View original source listing
-                </a>
-              )}
             </div>
           </section>
         </div>
@@ -208,5 +287,6 @@ export default async function ProductPage({
         </section>
       </div>
     </main>
+    </>
   );
 }
