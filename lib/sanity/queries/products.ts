@@ -73,3 +73,15 @@ export const FILTER_PRODUCTS_BY_RELEVANCE_QUERY = groq`
     ${PRODUCT_FIELDS}
   }
 `;
+
+// Related products — same category, excluding current slug, max 8
+export const RELATED_PRODUCTS_QUERY = groq`
+  *[
+    _type == "product"
+    && active != false
+    && slug.current != $slug
+    && ($categorySlug == "" || category->slug.current == $categorySlug)
+  ] | order(_createdAt desc) [0...8] {
+    ${PRODUCT_FIELDS}
+  }
+`;

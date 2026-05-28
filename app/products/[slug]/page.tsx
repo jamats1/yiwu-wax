@@ -7,8 +7,10 @@ import { ChevronRight, Package, RotateCcw, Truck } from "lucide-react";
 import AddToCartButton from "@/components/AddToCartButton";
 import { PriceDisplay } from "@/components/app/PriceDisplay";
 import { ProductImageGallery } from "@/components/app/ProductImageGallery";
+import { RelatedProducts } from "@/components/app/RelatedProducts";
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
+import { RELATED_PRODUCTS_QUERY } from "@/lib/sanity/queries/products";
 
 const productQuery = groq`
   *[_type == "product" && slug.current == $slug && active != false][0] {
@@ -24,7 +26,8 @@ const productQuery = groq`
     material,
     colors,
     stock,
-    sku
+    sku,
+    category-> { title, slug }
   }
 `;
 
@@ -98,6 +101,12 @@ export default async function ProductPage({
   if (!product) {
     notFound();
   }
+
+  const categorySlug = product.category?.slug?.current ?? "";
+  const relatedProducts = await client.fetch(RELATED_PRODUCTS_QUERY, {
+    slug: params.slug,
+    categorySlug,
+  }).catch(() => []);
 
   const stock = typeof product.stock === "number" ? product.stock : 0;
   const isSoldOut = product.availability === "sold_out" || (product.availability !== "in_stock" && stock <= 0);
@@ -287,6 +296,11 @@ export default async function ProductPage({
         </section>
       </div>
     </main>
+
+    <RelatedProducts
+      products={relatedProducts}
+      categoryTitle={product.category?.title}
+    />
     </>
   );
 }
