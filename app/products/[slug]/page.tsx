@@ -11,6 +11,7 @@ import { RelatedProducts } from "@/components/app/RelatedProducts";
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import { RELATED_PRODUCTS_QUERY } from "@/lib/sanity/queries/products";
+import { getVideoEmbedUrl } from "@/lib/video";
 
 const productQuery = groq`
   *[_type == "product" && slug.current == $slug && active != false][0] {
@@ -27,6 +28,7 @@ const productQuery = groq`
     colors,
     stock,
     sku,
+    videoUrl,
     category-> { title, slug }
   }
 `;
@@ -253,6 +255,25 @@ export default async function ProductPage({
         <section className="mt-10 space-y-4 rounded-2xl border border-gray-200 bg-white p-6">
           <details open>
             <summary className="cursor-pointer text-lg font-semibold text-gray-900">Description</summary>
+            {product.videoUrl && (() => {
+              const embedUrl = getVideoEmbedUrl(product.videoUrl);
+              return embedUrl ? (
+                <div className="mt-4 overflow-hidden rounded-xl border border-gray-100 bg-black">
+                  <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                    <iframe
+                      src={embedUrl}
+                      title={`${product.name} — factory video`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="absolute inset-0 h-full w-full"
+                    />
+                  </div>
+                  <p className="px-4 py-2 text-xs text-gray-400">
+                    Factory &amp; quality walkthrough — filmed at source in Yiwu, China
+                  </p>
+                </div>
+              ) : null;
+            })()}
             <p className="mt-3 whitespace-pre-line text-gray-700">
               {product.description ||
                 "High quality African wax print fabric suitable for clothing, accessories, decor, and craft projects."}

@@ -27,6 +27,13 @@ export default defineType({
       type: "text",
     }),
     defineField({
+      name: "videoUrl",
+      title: "Factory / Product Video URL",
+      type: "url",
+      description:
+        "Paste a YouTube or Vimeo URL (e.g. https://youtu.be/abc123). The video will be embedded in the Description section on the product page.",
+    }),
+    defineField({
       name: "price",
       title: "Price",
       type: "number",
