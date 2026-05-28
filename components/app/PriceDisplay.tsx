@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
-import { detectUserCurrency, getCurrencySymbol } from "@/lib/currency";
+import { getCurrencySymbol, getSiteCurrency } from "@/lib/currency";
 
 const FX_CLIENT_CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -71,25 +71,25 @@ async function getFxRate(from: string, to: string): Promise<FxCachedRate | null>
 }
 
 interface PriceDisplayProps {
-  /** Base amount stored in Sanity (e.g. EUR) */
+  /** Base amount stored in Sanity */
   amount: number;
-  /** Currency code of the stored price, e.g. "EUR" */
+  /** Currency code of the stored price, e.g. "USD" */
   baseCurrency: string;
 }
 
 /**
- * Client-side price display that:
- * - Starts with the base currency amount
- * - Detects user currency from browser locale
- * - Calls /api/fx to convert using prevailing rate when needed
+ * Client-side price display in site currency (USD).
+ * Converts from Sanity base currency via /api/fx when needed.
  */
 export function PriceDisplay({ amount, baseCurrency }: PriceDisplayProps) {
   const [displayAmount, setDisplayAmount] = useState(amount);
-  const [displayCurrency, setDisplayCurrency] = useState(baseCurrency);
+  const [displayCurrency, setDisplayCurrency] = useState(
+    baseCurrency || getSiteCurrency(),
+  );
 
   useEffect(() => {
-    const from = baseCurrency.toUpperCase();
-    const targetCurrency = detectUserCurrency()?.toUpperCase();
+    const from = (baseCurrency || getSiteCurrency()).toUpperCase();
+    const targetCurrency = getSiteCurrency();
 
     // If we can't detect or it's the same as base, just keep base.
     if (!targetCurrency || targetCurrency === from) {

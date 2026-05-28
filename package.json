@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "deploy": "npm run build && pm2 restart yiwu-wax --update-env && pm2 save",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -14,6 +15,7 @@
     "progress": "tsx scripts/check-progress.ts",
     "cleanup": "tsx scripts/remove-duplicates.ts",
     "stock": "tsx scripts/update-stock.ts",
+    "cleanup-original": "tsx scripts/remove-original-url-products.ts",
     "fix-data": "tsx scripts/fix-prices-and-categories.ts"
   },
   "dependencies": {

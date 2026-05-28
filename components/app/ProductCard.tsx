@@ -37,8 +37,10 @@ export function ProductCard({ product }: ProductCardProps) {
     ? images[hoveredImageIndex] 
     : mainImage;
 
-  const stock = product.stock ?? 0;
-  const isOutOfStock = stock <= 0 || product.availability === "sold_out";
+  const rawStock = product.stock ?? 0;
+  const isOutOfStock = product.availability === "sold_out" || (product.availability !== "in_stock" && rawStock <= 0);
+  // When availability says in_stock but stock field is unset/zero, use a large placeholder so cart logic works
+  const stock = isOutOfStock ? 0 : (rawStock > 0 ? rawStock : 999);
   const hasMultipleImages = images.length > 1;
 
   return (
@@ -131,6 +133,7 @@ export function ProductCard({ product }: ProductCardProps) {
             image={mainImage}
             stock={stock}
             slug={product.slug?.current || product._id}
+            currency={product.currency || "USD"}
           />
         </div>
       </div>

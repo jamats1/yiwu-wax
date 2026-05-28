@@ -36,7 +36,7 @@ export default defineType({
       name: "currency",
       title: "Currency",
       type: "string",
-      initialValue: "EUR",
+      initialValue: "USD",
       options: {
         list: [
           { title: "Euro (€)", value: "EUR" },
@@ -125,6 +125,13 @@ export default defineType({
       type: "boolean",
       initialValue: false,
     }),
+    defineField({
+      name: "active",
+      title: "Active",
+      type: "boolean",
+      initialValue: true,
+      description: "Inactive products are hidden from the storefront",
+    }),
   ],
   preview: {
     select: {
@@ -136,7 +143,7 @@ export default defineType({
       return {
         title,
         media,
-        subtitle: `€${subtitle}`,
+        subtitle: `$${subtitle}`,
       };
     },
   },

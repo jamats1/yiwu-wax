@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { cn, formatPrice } from "@/lib/utils";
+import { getCurrencySymbol, SITE_CURRENCY } from "@/lib/currency";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
 
@@ -30,11 +31,7 @@ interface AddToCartButtonProps {
 }
 
 function currencySymbol(code: string): string {
-  const c = code?.toUpperCase() ?? "EUR";
-  if (c === "EUR") return "€";
-  if (c === "USD") return "$";
-  if (c === "GBP") return "£";
-  return "€";
+  return getCurrencySymbol(code || SITE_CURRENCY);
 }
 
 export default function AddToCartButton({
@@ -68,7 +65,7 @@ export default function AddToCartButton({
     : product.name;
   const lineId = hasOptions ? `${product._id}__${selectedOptionId}` : product._id;
   const variantReady = !hasOptions || Boolean(selectedOption);
-  const isUnavailable = soldOut || parsedStock <= 0 || !variantReady;
+  const isUnavailable = soldOut || !variantReady;
   const sym = currencySymbol(product.currency);
 
   const bumpQty = (delta: number) => {

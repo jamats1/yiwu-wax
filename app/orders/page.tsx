@@ -2,6 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
 import { PriceDisplay } from "@/components/app/PriceDisplay";
+import { formatMoney, SITE_CURRENCY } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -115,7 +116,7 @@ export default async function OrdersPage() {
                       <span>
                         {item.productName || "Item"} x {item.quantity || 1}
                       </span>
-                      <span>€{(item.price || 0).toFixed(2)}</span>
+                      <span>{formatMoney(item.price || 0, SITE_CURRENCY)}</span>
                     </div>
                   ))}
                 </div>
@@ -123,7 +124,7 @@ export default async function OrdersPage() {
                 <div className="mt-4 border-t border-gray-100 pt-4 text-right">
                   <span className="text-sm text-gray-600">Total: </span>
                   <span className="text-lg font-bold text-gray-900">
-                    <PriceDisplay amount={order.total || 0} baseCurrency="EUR" />
+                    <PriceDisplay amount={order.total || 0} baseCurrency={SITE_CURRENCY} />
                   </span>
                 </div>
               </article>

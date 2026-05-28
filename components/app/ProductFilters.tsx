@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatMoney } from "@/lib/currency";
 import { Slider } from "@/components/ui/slider";
 import { COLORS, MATERIALS, SORT_OPTIONS } from "@/lib/constants/filters";
 
@@ -287,7 +288,7 @@ export function ProductFilters({ categories, maxPrice }: ProductFiltersProps) {
       {/* Price Range */}
       <div>
         <FilterLabel isActive={isPriceActive} filterKey="price">
-          Price Range: €{priceRange[0]} - €{priceRange[1]}
+          Price Range: {formatMoney(priceRange[0])} - {formatMoney(priceRange[1])}
         </FilterLabel>
         <Slider
           value={priceRange}

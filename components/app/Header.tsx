@@ -40,6 +40,9 @@ export function Header() {
             <Link href="/faq" className="hover:text-accent transition-colors">
               FAQ
             </Link>
+            <Link href="/contact" className="hover:text-accent transition-colors">
+              Contact
+            </Link>
           </nav>
 
           {/* Actions */}

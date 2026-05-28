@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
+import { formatMoney } from "@/lib/currency";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -256,7 +257,7 @@ export default function CheckoutPage() {
                       <span className="mt-0.5 block text-gray-500">×{item.quantity}</span>
                     </span>
                     <span className="shrink-0 font-semibold text-gray-900">
-                      €{(item.price * item.quantity).toFixed(2)}
+                      {formatMoney(item.price * item.quantity, item.currency)}
                     </span>
                   </li>
                 ))}
@@ -264,7 +265,7 @@ export default function CheckoutPage() {
               <div className="mt-4 border-t border-gray-200 pt-4">
                 <div className="flex justify-between text-xl font-bold text-gray-900 sm:text-2xl">
                   <span>Total</span>
-                  <span>€{total.toFixed(2)}</span>
+                  <span>{formatMoney(total)}</span>
                 </div>
                 <p className="mt-3 text-xs text-gray-600 sm:text-sm">
                   Shipping and taxes are finalized on Stripe before you pay.

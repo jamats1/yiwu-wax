@@ -1,20 +1,15 @@
 export type CurrencyCode = "EUR" | "USD" | "GBP";
 
+/** Storefront display and Stripe checkout currency */
+export const SITE_CURRENCY: CurrencyCode = "USD";
+
+export function getSiteCurrency(): CurrencyCode {
+  return SITE_CURRENCY;
+}
+
+/** @deprecated Use getSiteCurrency — kept for PriceDisplay call sites */
 export function detectUserCurrency(): CurrencyCode {
-  if (typeof window === "undefined") {
-    return "EUR";
-  }
-
-  const lang =
-    navigator.language ||
-    (Array.isArray(navigator.languages) ? navigator.languages[0] : "") ||
-    "";
-  const lower = lang.toLowerCase();
-
-  if (lower.includes("us")) return "USD";
-  if (lower.includes("gb")) return "GBP";
-
-  return "EUR";
+  return SITE_CURRENCY;
 }
 
 export function getCurrencySymbol(code: CurrencyCode | string): string {
@@ -24,8 +19,15 @@ export function getCurrencySymbol(code: CurrencyCode | string): string {
     case "GBP":
       return "£";
     case "EUR":
-    default:
       return "€";
+    default:
+      return "$";
   }
 }
 
+export function formatMoney(
+  amount: number | null | undefined,
+  currencyCode: string = SITE_CURRENCY,
+): string {
+  return `${getCurrencySymbol(currencyCode)}${(amount ?? 0).toFixed(2)}`;
+}

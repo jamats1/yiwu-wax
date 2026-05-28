@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
         return {
           price_data: {
-            currency: item.currency?.toLowerCase() === "eur" ? "eur" : "usd",
+            currency: (item.currency?.toLowerCase() || "usd") === "eur" ? "eur" : "usd",
             product_data: {
               name: item.name,
               images: imageUrl ? [imageUrl] : [],

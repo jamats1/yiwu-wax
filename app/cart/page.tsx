@@ -7,6 +7,7 @@ import Link from "next/link";
 import { urlFor } from "@/sanity/lib/image";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { formatMoney } from "@/lib/currency";
 
 export default function CartPage() {
   const router = useRouter();
@@ -92,13 +93,11 @@ export default function CartPage() {
                             </h2>
                           </Link>
                           <p className="mt-1 text-sm text-gray-600">
-                            {item.currency === "EUR" ? "€" : item.currency}
-                            {item.price.toFixed(2)} each
+                            {formatMoney(item.price, item.currency)} each
                           </p>
                         </div>
                         <p className="text-xl font-bold text-primary sm:text-right sm:text-2xl">
-                          {item.currency === "EUR" ? "€" : item.currency}
-                          {(item.price * item.quantity).toFixed(2)}
+                          {formatMoney(item.price * item.quantity, item.currency)}
                         </p>
                       </div>
                       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -142,7 +141,7 @@ export default function CartPage() {
               <div className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between text-gray-700">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-gray-900">€{total.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-900">{formatMoney(total)}</span>
                 </div>
                 <div className="flex justify-between gap-4 text-gray-600">
                   <span>Shipping</span>
@@ -151,7 +150,7 @@ export default function CartPage() {
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between text-lg font-bold text-gray-900 sm:text-xl">
                     <span>Total</span>
-                    <span>€{total.toFixed(2)}</span>
+                    <span>{formatMoney(total)}</span>
                   </div>
                   <p className="mt-2 text-xs text-gray-500">Taxes and delivery confirmed before you pay.</p>
                 </div>

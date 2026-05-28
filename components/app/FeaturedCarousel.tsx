@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { urlFor } from "@/sanity/lib/image";
+import { PriceDisplay } from "@/components/app/PriceDisplay";
 
 interface FeaturedProduct {
   _id: string;
@@ -93,8 +94,10 @@ export function FeaturedCarousel({ products }: FeaturedCarouselProps) {
 
           <div className="mb-6">
             <span className="text-4xl font-bold text-accent">
-              {currentProduct.currency === "EUR" ? "€" : currentProduct.currency}{" "}
-              {currentProduct.price}
+              <PriceDisplay
+                amount={currentProduct.price}
+                baseCurrency={currentProduct.currency || "USD"}
+              />
             </span>
           </div>
 

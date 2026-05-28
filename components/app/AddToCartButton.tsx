@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Minus, Plus, ShoppingBag, Loader2 } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { cn } from "@/lib/utils";
+import { SITE_CURRENCY } from "@/lib/currency";
 
 interface AddToCartButtonProps {
   productId: string;
@@ -12,6 +13,7 @@ interface AddToCartButtonProps {
   image?: any;
   stock: number;
   slug?: string;
+  currency?: string;
   className?: string;
 }
 
@@ -22,6 +24,7 @@ export function AddToCartButton({
   image,
   stock,
   slug,
+  currency = SITE_CURRENCY,
   className,
 }: AddToCartButtonProps) {
   const addItem = useCartStore((s) => s.addItem);
@@ -43,7 +46,7 @@ export function AddToCartButton({
         name,
         slug: slug || productId,
         price,
-        currency: "EUR",
+        currency,
         image,
         quantity: 1,
       });

@@ -8,6 +8,7 @@ import { Loader2, Plus, ShoppingBag, X } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { urlFor } from "@/sanity/lib/image";
 import { cn } from "@/lib/utils";
+import { formatMoney } from "@/lib/currency";
 
 export function CartTray() {
   const router = useRouter();
@@ -68,7 +69,7 @@ export function CartTray() {
                 <h3 className="text-xl font-bold text-gray-900">Basket</h3>
               </div>
               <p className="text-sm text-gray-600">
-                {count} item{count === 1 ? "" : "s"} · €{total.toFixed(2)}
+                {count} item{count === 1 ? "" : "s"} · {formatMoney(total)}
               </p>
             </div>
             <button
@@ -121,7 +122,7 @@ export function CartTray() {
                         <div className="flex items-start justify-between gap-2">
                           <p className="line-clamp-2 font-semibold text-gray-900">{item.name}</p>
                           <p className="shrink-0 font-bold text-primary">
-                            €{(item.price * item.quantity).toFixed(2)}
+                            {formatMoney(item.price * item.quantity, item.currency)}
                           </p>
                         </div>
                         <p className="mt-1 text-sm text-gray-600">

@@ -31,7 +31,7 @@ const faqs = [
 ] as const;
 
 export const metadata: Metadata = {
-  title: "FAQ | Yiwu Wax",
+  title: "FAQ",
   description:
     "Frequently asked questions about African fabrics, wax prints, orders, shipping, and payments.",
   alternates: { canonical: `${getSiteUrl()}/faq` },
@@ -42,6 +42,11 @@ export const metadata: Metadata = {
     url: `${getSiteUrl()}/faq`,
     siteName: "Yiwu Wax",
     type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "FAQ | Yiwu Wax",
+    description: "Answers about fabrics, orders, shipping, and payments at Yiwu Wax.",
   },
 };
 

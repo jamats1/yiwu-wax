@@ -21,6 +21,7 @@ const PRODUCT_FIELDS = `
 // Common filter conditions (always include all filters, use empty string defaults)
 const PRODUCT_FILTER_CONDITIONS = `
   _type == "product"
+  && active != false
   && ($categorySlug == "" || category->slug.current == $categorySlug)
   && ($color == "" || $color in colors)
   && ($material == "" || material == $material)
@@ -32,7 +33,7 @@ const PRODUCT_FILTER_CONDITIONS = `
 
 // Featured products query
 export const FEATURED_PRODUCTS_QUERY = groq`
-  *[_type == "product" && featured == true][0...8] {
+  *[_type == "product" && featured == true && active != false][0...8] {
     ${PRODUCT_FIELDS},
     description
   }
