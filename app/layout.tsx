@@ -7,9 +7,10 @@ import { Header } from "@/components/app/Header";
 import { CartTray } from "@/components/app/CartTray";
 import { WhatsAppButton } from "@/components/app/WhatsAppButton";
 import { Footer } from "@/components/app/Footer";
+import { NavigationProgress } from "@/components/app/NavigationProgress";
 import { getSiteUrl } from "@/lib/site-url";
 
-const META_PIXEL_ID = "1242298324450395";
+const META_PIXEL_ID = "2510793769421196";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -120,6 +121,7 @@ export default function RootLayout({
               alt=""
             />
           </noscript>
+          <NavigationProgress />
           <Header />
           <CartTray />
           {children}
