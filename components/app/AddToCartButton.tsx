@@ -87,6 +87,7 @@ export function AddToCartButton({
     return (
       <button
         type="button"
+        data-testid="add-to-cart"
         onClick={handleAdd}
         disabled={isAdding}
         className={cn(

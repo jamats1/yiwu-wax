@@ -16,7 +16,11 @@
     "cleanup": "tsx scripts/remove-duplicates.ts",
     "stock": "tsx scripts/update-stock.ts",
     "cleanup-original": "tsx scripts/remove-original-url-products.ts",
-    "fix-data": "tsx scripts/fix-prices-and-categories.ts"
+    "fix-data": "tsx scripts/fix-prices-and-categories.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.0.0",
@@ -38,6 +42,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@sanity/icons": "^2.11.8",
     "@sanity/ui": "^1.9.3",
     "@types/node": "^20.0.0",

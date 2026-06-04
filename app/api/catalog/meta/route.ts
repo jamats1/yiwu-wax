@@ -88,7 +88,7 @@ export async function GET() {
       .join(",");
 
     const colors = (p.colors ?? []).join(", ");
-    const material = p.material ? p.material.replace("-", " ") : "";
+    const material = p.material ? p.material.replace(/-/g, " ") : "";
     const sku = p.sku || p._id;
     const productType = p.category?.title
       ? `African Wax Print Fabrics > ${p.category.title}`

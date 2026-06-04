@@ -1,21 +1,10 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/products(.*)",
-  "/orders(.*)",
-  "/faq(.*)",
-  "/contact(.*)",
-  "/shipping(.*)",
-  "/terms(.*)",
-  "/privacy(.*)",
-  "/api/fx(.*)",
-  "/api/webhooks(.*)",
-  "/api/catalog(.*)",
-]);
+// Only the Sanity Studio requires Clerk auth — everything else is public.
+const isProtectedRoute = createRouteMatcher(["/studio(.*)"]);
 
 export default clerkMiddleware((auth, request) => {
-  if (!isPublicRoute(request)) {
+  if (isProtectedRoute(request)) {
     auth().protect();
   }
 });

@@ -44,7 +44,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const hasMultipleImages = images.length > 1;
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg">
+    <div data-testid="product-card" className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg">
       {/* Image Container */}
       <Link href={`/products/${product.slug.current}`} className="relative aspect-square overflow-hidden bg-gray-100">
         {displayedImage ? (
