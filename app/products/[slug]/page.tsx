@@ -13,7 +13,6 @@ import { WholesaleTrustBlock } from "@/components/app/WholesaleTrustBlock";
 import { ProductBenefits } from "@/components/app/ProductBenefits";
 import { ProductReviews } from "@/components/app/ProductReviews";
 import { ProductFAQ } from "@/components/app/ProductFAQ";
-import { BulkCalculator } from "@/components/app/BulkCalculator";
 import { StickyProductCTA } from "@/components/app/StickyProductCTA";
 import { RequestQuoteButton } from "@/components/app/RequestQuoteButton";
 import { ProductViewTracker } from "@/components/app/ProductViewTracker";
@@ -281,13 +280,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
             </details>
           </section>
 
-          {/* SECTION 4 — Bulk calculator */}
-          <BulkCalculator price={product.price} currency={product.currency} productName={product.name} />
-
-          {/* SECTION 5 — Reviews */}
+          {/* SECTION 4 — Reviews */}
           <ProductReviews productId={product._id} productName={product.name} />
 
-          {/* SECTION 6 — FAQ */}
+          {/* SECTION 5 — FAQ */}
           <ProductFAQ productName={product.name} />
         </div>
       </main>
