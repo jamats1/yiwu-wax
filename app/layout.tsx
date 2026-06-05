@@ -6,16 +6,16 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Header } from "@/components/app/Header";
 import { CartTray } from "@/components/app/CartTray";
-import { WhatsAppButton } from "@/components/app/WhatsAppButton";
+import { WhatsAppWidget } from "@/components/app/WhatsAppWidget";
 import { Footer } from "@/components/app/Footer";
 import { NavigationProgress } from "@/components/app/NavigationProgress";
 import { MobileBottomNav } from "@/components/app/MobileBottomNav";
 import { getSiteUrl } from "@/lib/site-url";
 
 const META_PIXEL_ID = "2510793769421196";
+const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID ?? "";
 
 const inter = Inter({ subsets: ["latin"] });
-
 const siteUrl = getSiteUrl();
 
 const defaultDescription =
@@ -73,35 +73,25 @@ const webSiteJsonLd = {
   url: siteUrl,
   potentialAction: {
     "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${siteUrl}/?q={search_term_string}`,
-    },
+    target: { "@type": "EntryPoint", urlTemplate: `${siteUrl}/?q={search_term_string}` },
     "query-input": "required name=search_term_string",
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider>
       <html lang="en">
         <body className={inter.className}>
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(orgJsonLd).replace(/</g, "\\u003c"),
-            }}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd).replace(/</g, "\\u003c") }}
           />
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(webSiteJsonLd).replace(/</g, "\\u003c"),
-            }}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd).replace(/</g, "\\u003c") }}
           />
+
           {/* Meta Pixel */}
           <Script id="meta-pixel" strategy="afterInteractive">{`
             !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
@@ -115,14 +105,21 @@ export default function RootLayout({
           `}</Script>
           <noscript>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              height="1"
-              width="1"
-              style={{ display: "none" }}
-              src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
-              alt=""
-            />
+            <img height="1" width="1" style={{ display: "none" }}
+              src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`} alt="" />
           </noscript>
+
+          {/* Microsoft Clarity */}
+          {CLARITY_ID && (
+            <Script id="ms-clarity" strategy="afterInteractive">{`
+              (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+              })(window,document,"clarity","script","${CLARITY_ID}");
+            `}</Script>
+          )}
+
           <NavigationProgress />
           <Header />
           <CartTray />
@@ -130,7 +127,7 @@ export default function RootLayout({
             {children}
           </div>
           <Footer />
-          <WhatsAppButton />
+          <WhatsAppWidget />
           <MobileBottomNav />
         </body>
         {process.env.NEXT_PUBLIC_GA_ID && (

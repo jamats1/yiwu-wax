@@ -77,6 +77,18 @@ export function trackBeginCheckout(
   });
 }
 
+export function trackEvent(eventName: string, params?: Record<string, unknown>) {
+  gtag("event", eventName, params ?? {});
+}
+
+export function trackWhatsAppClick(source: string, productName?: string) {
+  gtag("event", "whatsapp_click", { source, product_name: productName ?? "" });
+}
+
+export function trackScrollDepth(depthPercent: number) {
+  gtag("event", "scroll_depth", { depth_percent: depthPercent });
+}
+
 export function trackPurchase(
   transactionId: string,
   cartItems: Array<{
