@@ -9,6 +9,7 @@ import { ChevronRight, Loader2, Lock } from "lucide-react";
 import { formatMoney } from "@/lib/currency";
 import { TrustBadges } from "@/components/app/TrustBadges";
 import { CartTimer } from "@/components/app/CartTimer";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -41,6 +42,17 @@ export default function CheckoutPage() {
       router.replace("/cart");
     }
   }, [items.length, router]);
+
+  useEffect(() => {
+    if (items.length > 0) {
+      trackBeginCheckout(
+        items.map((i) => ({ id: i.id, name: i.name, price: i.price, currency: i.currency, quantity: i.quantity })),
+        total,
+      );
+    }
+    // fire once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

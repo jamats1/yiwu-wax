@@ -2,20 +2,31 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/lib/store/cart-store";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { trackPurchase } from "@/lib/analytics";
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
-  const clearCart = useCartStore((state) => state.clearCart);
+  const { items, getTotal, clearCart } = useCartStore();
+  const fired = useRef(false);
 
   useEffect(() => {
-    // Clear cart on successful checkout
-    if (sessionId) {
-      clearCart();
+    if (!sessionId || fired.current) return;
+    fired.current = true;
+
+    // Fire purchase event before clearing the cart
+    if (items.length > 0) {
+      trackPurchase(
+        sessionId,
+        items.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+        getTotal(),
+      );
     }
-  }, [sessionId, clearCart]);
+
+    clearCart();
+  }, [sessionId, items, getTotal, clearCart]);
 
   return (
     <main className="min-h-screen bg-white relative overflow-hidden w-full">

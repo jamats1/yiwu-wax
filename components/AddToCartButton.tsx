@@ -5,6 +5,7 @@ import { useCartStore } from "@/lib/store/cart-store";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
+import { trackAddToCart } from "@/lib/analytics";
 
 interface Product {
   _id: string;
@@ -64,6 +65,8 @@ export default function AddToCartButton({
       image: product.images[0],
       quantity,
     });
+
+    trackAddToCart({ id: lineId, name: cartName, price: unitPrice, currency: product.currency, quantity });
 
     openCartTray();
     // UX: give immediate feedback even though add-to-cart is synchronous.

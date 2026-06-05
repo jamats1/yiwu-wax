@@ -11,6 +11,7 @@ import { RelatedProducts } from "@/components/app/RelatedProducts";
 import { TrustBadges } from "@/components/app/TrustBadges";
 import { ProductReviews } from "@/components/app/ProductReviews";
 import { StickyProductCTA } from "@/components/app/StickyProductCTA";
+import { ProductViewTracker } from "@/components/app/ProductViewTracker";
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import { RELATED_PRODUCTS_QUERY } from "@/lib/sanity/queries/products";
@@ -149,6 +150,15 @@ export default async function ProductPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(productJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <ProductViewTracker
+        product={{
+          _id: product._id,
+          name: product.name,
+          price: product.price,
+          currency: product.currency,
+          category: product.category?.title,
         }}
       />
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-8 sm:pb-12">
