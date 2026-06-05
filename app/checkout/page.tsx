@@ -5,8 +5,10 @@ import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight, Loader2, Lock } from "lucide-react";
 import { formatMoney } from "@/lib/currency";
+import { TrustBadges } from "@/components/app/TrustBadges";
+import { CartTimer } from "@/components/app/CartTimer";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -240,14 +242,22 @@ export default function CheckoutPage() {
                     Opening secure payment…
                   </>
                 ) : (
-                  "Continue to payment"
+                  <>
+                    <Lock className="h-4 w-4 shrink-0" aria-hidden />
+                    Continue to secure payment
+                  </>
                 )}
               </button>
+              <p className="text-center text-xs text-gray-500">
+                Your payment is processed securely by Stripe. We never store card details.
+              </p>
             </form>
           </div>
 
           <div>
-            <div className="sticky top-20 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8 lg:top-24">
+            <div className="sticky top-20 space-y-4 lg:top-24">
+            <CartTimer />
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
               <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Order summary</h2>
               <ul className="mt-4 space-y-3 border-b border-gray-100 pb-4">
                 {items.map((item) => (
@@ -268,9 +278,11 @@ export default function CheckoutPage() {
                   <span>{formatMoney(total)}</span>
                 </div>
                 <p className="mt-3 text-xs text-gray-600 sm:text-sm">
-                  Shipping and taxes are finalized on Stripe before you pay.
+                  Shipping and taxes are confirmed on Stripe before you pay.
                 </p>
               </div>
+            </div>
+            <TrustBadges />
             </div>
           </div>
         </div>

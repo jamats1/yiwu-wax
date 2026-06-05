@@ -8,6 +8,9 @@ import AddToCartButton from "@/components/AddToCartButton";
 import { PriceDisplay } from "@/components/app/PriceDisplay";
 import { ProductImageGallery } from "@/components/app/ProductImageGallery";
 import { RelatedProducts } from "@/components/app/RelatedProducts";
+import { TrustBadges } from "@/components/app/TrustBadges";
+import { ProductReviews } from "@/components/app/ProductReviews";
+import { StickyProductCTA } from "@/components/app/StickyProductCTA";
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import { RELATED_PRODUCTS_QUERY } from "@/lib/sanity/queries/products";
@@ -221,12 +224,16 @@ export default async function ProductPage({
               </p>
             </div>
 
-            <div className="mt-6 border-t border-gray-100 pt-6">
+            <div id="add-to-cart-section" className="mt-6 border-t border-gray-100 pt-6">
               <AddToCartButton
                 product={product}
                 stock={stock}
                 soldOut={isSoldOut}
               />
+            </div>
+
+            <div className="mt-5">
+              <TrustBadges />
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-3 rounded-xl border border-gray-200 p-4 sm:grid-cols-2">
@@ -305,9 +312,19 @@ export default async function ProductPage({
       </div>
     </main>
 
+    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <ProductReviews productId={product._id} productName={product.name} />
+    </div>
+
     <RelatedProducts
       products={relatedProducts}
       categoryTitle={product.category?.title}
+    />
+
+    <StickyProductCTA
+      product={product}
+      soldOut={isSoldOut}
+      watchElementId="add-to-cart-section"
     />
     </>
   );

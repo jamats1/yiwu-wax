@@ -4,7 +4,7 @@ const WHATSAPP_NUMBER = "8618157977478";
 const WHATSAPP_MESSAGE = "Hi! I'd like to know more about your African wax print fabrics.";
 
 const shopLinks = [
-  { label: "All Fabrics", href: "/" },
+  { label: "All Fabrics", href: "/products" },
   { label: "FAQ", href: "/faq" },
   { label: "My Orders", href: "/orders" },
 ];
@@ -12,6 +12,7 @@ const shopLinks = [
 const infoLinks = [
   { label: "Contact", href: "/contact" },
   { label: "Shipping Policy", href: "/shipping" },
+  { label: "Returns & Refunds", href: "/returns" },
   { label: "Terms of Service", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },
 ];

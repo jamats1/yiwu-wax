@@ -8,6 +8,7 @@ import { CartTray } from "@/components/app/CartTray";
 import { WhatsAppButton } from "@/components/app/WhatsAppButton";
 import { Footer } from "@/components/app/Footer";
 import { NavigationProgress } from "@/components/app/NavigationProgress";
+import { MobileBottomNav } from "@/components/app/MobileBottomNav";
 import { getSiteUrl } from "@/lib/site-url";
 
 const META_PIXEL_ID = "2510793769421196";
@@ -124,9 +125,12 @@ export default function RootLayout({
           <NavigationProgress />
           <Header />
           <CartTray />
-          {children}
+          <div className="pb-16 md:pb-0">
+            {children}
+          </div>
           <Footer />
           <WhatsAppButton />
+          <MobileBottomNav />
         </body>
       </html>
     </ClerkProvider>
