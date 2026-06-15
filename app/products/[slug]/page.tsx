@@ -1,5 +1,6 @@
 import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
+import { fabricPriceGroq } from "@/lib/fabric-types";
 import { urlFor } from "@/sanity/lib/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -24,7 +25,10 @@ import { getVideoEmbedUrl } from "@/lib/video";
 
 const productQuery = groq`
   *[_type == "product" && slug.current == $slug && active != false][0] {
-    _id, name, slug, description, price, currency, pricePerYard,
+    _id, name, slug, description,
+    "price": ${fabricPriceGroq()},
+    "currency": "CNY",
+    fabricType, pricePerYard,
     images, availability, material, colors, stock, sku, videoUrl,
     category-> { title, slug }
   }

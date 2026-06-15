@@ -1,4 +1,5 @@
 import { defineField, defineType } from "sanity";
+import { FABRIC_TYPES } from "../../lib/fabric-types";
 
 export default defineType({
   name: "product",
@@ -34,18 +35,43 @@ export default defineType({
         "Paste a YouTube or Vimeo URL (e.g. https://youtu.be/abc123). The video will be embedded in the Description section on the product page.",
     }),
     defineField({
-      name: "price",
-      title: "Price",
+      name: "fabricType",
+      title: "Fabric Type",
+      type: "string",
+      description:
+        "Sets the factory base price (in RMB). Choose the fabric quality — the price is derived from this unless you set a price override below.",
+      options: {
+        list: FABRIC_TYPES.map((t) => ({
+          title: `${t.title} (¥${t.basePriceRmb})`,
+          value: t.value,
+        })),
+      },
+    }),
+    defineField({
+      name: "priceRmb",
+      title: "Price Override (RMB)",
       type: "number",
-      validation: (Rule) => Rule.required().positive(),
+      description:
+        "Optional. Overrides the fabric-type base price for this product. Leave empty to use the type price.",
+      validation: (Rule) => Rule.positive(),
+    }),
+    defineField({
+      name: "price",
+      title: "Legacy Price",
+      type: "number",
+      description:
+        "Deprecated. Base price now comes from Fabric Type / Price Override (in RMB). Kept for products not yet migrated.",
     }),
     defineField({
       name: "currency",
       title: "Currency",
       type: "string",
-      initialValue: "USD",
+      readOnly: true,
+      initialValue: "CNY",
+      description: "Base currency is RMB (CNY). Prices are converted to the visitor's currency at display.",
       options: {
         list: [
+          { title: "Chinese Yuan (¥)", value: "CNY" },
           { title: "Euro (€)", value: "EUR" },
           { title: "US Dollar ($)", value: "USD" },
           { title: "British Pound (£)", value: "GBP" },
@@ -144,13 +170,17 @@ export default defineType({
     select: {
       title: "name",
       media: "images.0",
-      subtitle: "price",
+      fabricType: "fabricType",
+      priceRmb: "priceRmb",
+      price: "price",
     },
-    prepare({ title, media, subtitle }) {
+    prepare({ title, media, fabricType, priceRmb, price }) {
+      const typePrice = FABRIC_TYPES.find((t) => t.value === fabricType)?.basePriceRmb;
+      const rmb = priceRmb ?? typePrice ?? price;
       return {
         title,
         media,
-        subtitle: `$${subtitle}`,
+        subtitle: rmb ? `¥${rmb}${fabricType ? ` · ${fabricType}` : ""}` : "No price",
       };
     },
   },

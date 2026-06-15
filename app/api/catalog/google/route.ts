@@ -1,31 +1,7 @@
 import { NextResponse } from "next/server";
-import { groq } from "next-sanity";
-import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { getSiteUrl } from "@/lib/site-url";
-
-const CATALOG_QUERY = groq`
-  *[_type == "product" && active != false] | order(_createdAt desc) {
-    _id, name, slug, description, price, currency,
-    images, availability, material, colors, stock, sku, category->{ title }
-  }
-`;
-
-type SanityProduct = {
-  _id: string;
-  name: string;
-  slug: { current: string };
-  description?: string;
-  price: number;
-  currency?: string;
-  images?: Record<string, unknown>[];
-  availability?: string;
-  material?: string;
-  colors?: string[];
-  stock?: number;
-  sku?: string;
-  category?: { title: string };
-};
+import { getCatalogProducts, feedPrice, type CatalogProduct } from "@/lib/catalog";
 
 function xmlEscape(str: string): string {
   return str
@@ -44,9 +20,10 @@ function g(tag: string, value: unknown): string {
 export async function GET() {
   const siteUrl = getSiteUrl();
 
-  let products: SanityProduct[] = [];
+  let products: CatalogProduct[] = [];
+  let rate = 1;
   try {
-    products = await client.fetch(CATALOG_QUERY);
+    ({ products, rate } = await getCatalogProducts());
   } catch {
     return new NextResponse("Failed to fetch products", { status: 502 });
   }
@@ -59,8 +36,7 @@ export async function GET() {
         p.availability === "in_stock" ||
         (p.availability !== "sold_out" && (p.stock ?? 0) > 0);
 
-      const currency = p.currency || "USD";
-      const price = `${p.price.toFixed(2)} ${currency}`;
+      const price = feedPrice(p.priceRmb, rate);
       const link = `${siteUrl}/products/${p.slug.current}`;
 
       const rawDesc =

@@ -8,7 +8,8 @@ import { Loader2, Plus, ShoppingBag, X } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { urlFor } from "@/sanity/lib/image";
 import { cn } from "@/lib/utils";
-import { formatMoney } from "@/lib/currency";
+import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
+import { useFx } from "@/lib/use-fx";
 
 export function CartTray() {
   const router = useRouter();
@@ -20,6 +21,9 @@ export function CartTray() {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const { currency, convert } = useFx([BASE_CURRENCY]);
+  const money = (baseAmount: number, from: string = BASE_CURRENCY) =>
+    formatMoney(convert(baseAmount, from), currency);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -69,7 +73,7 @@ export function CartTray() {
                 <h3 className="text-xl font-bold text-gray-900">Basket</h3>
               </div>
               <p className="text-sm text-gray-600">
-                {count} item{count === 1 ? "" : "s"} · {formatMoney(total)}
+                {count} item{count === 1 ? "" : "s"} · {money(total)}
               </p>
             </div>
             <button
@@ -122,7 +126,7 @@ export function CartTray() {
                         <div className="flex items-start justify-between gap-2">
                           <p className="line-clamp-2 font-semibold text-gray-900">{item.name}</p>
                           <p className="shrink-0 font-bold text-primary">
-                            {formatMoney(item.price * item.quantity, item.currency)}
+                            {money(item.price * item.quantity, item.currency)}
                           </p>
                         </div>
                         <p className="mt-1 text-sm text-gray-600">

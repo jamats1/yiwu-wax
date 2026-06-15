@@ -1,8 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
-import { PriceDisplay } from "@/components/app/PriceDisplay";
-import { formatMoney, SITE_CURRENCY } from "@/lib/currency";
+import { formatMoney, DEFAULT_DISPLAY_CURRENCY } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +11,7 @@ const ordersByEmailQuery = groq`
     _createdAt,
     orderNumber,
     total,
+    currency,
     status,
     items[]{
       productName,
@@ -32,6 +32,7 @@ type Order = {
   _createdAt: string;
   orderNumber?: string;
   total?: number;
+  currency?: string;
   status?: string;
   items?: OrderItem[];
 };
@@ -116,7 +117,7 @@ export default async function OrdersPage() {
                       <span>
                         {item.productName || "Item"} x {item.quantity || 1}
                       </span>
-                      <span>{formatMoney(item.price || 0, SITE_CURRENCY)}</span>
+                      <span>{formatMoney(item.price || 0, order.currency || DEFAULT_DISPLAY_CURRENCY)}</span>
                     </div>
                   ))}
                 </div>
@@ -124,7 +125,7 @@ export default async function OrdersPage() {
                 <div className="mt-4 border-t border-gray-100 pt-4 text-right">
                   <span className="text-sm text-gray-600">Total: </span>
                   <span className="text-lg font-bold text-gray-900">
-                    <PriceDisplay amount={order.total || 0} baseCurrency={SITE_CURRENCY} />
+                    {formatMoney(order.total || 0, order.currency || DEFAULT_DISPLAY_CURRENCY)}
                   </span>
                 </div>
               </article>

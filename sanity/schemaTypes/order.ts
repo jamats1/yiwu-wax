@@ -45,6 +45,34 @@ export default defineType({
       validation: (Rule) => Rule.required().positive(),
     }),
     defineField({
+      name: "currency",
+      title: "Charge Currency",
+      type: "string",
+      description: "Currency the customer was charged in (converted from RMB base).",
+    }),
+    defineField({
+      name: "shippingMethod",
+      title: "Shipping Method",
+      type: "string",
+      options: {
+        list: [
+          { title: "Sea freight", value: "sea" },
+          { title: "Air freight", value: "air" },
+          { title: "Collect from shop (Yiwu)", value: "pickup" },
+        ],
+      },
+    }),
+    defineField({
+      name: "shippingCost",
+      title: "Shipping Cost",
+      type: "number",
+    }),
+    defineField({
+      name: "processingFee",
+      title: "Processing Fee",
+      type: "number",
+    }),
+    defineField({
       name: "status",
       title: "Status",
       type: "string",

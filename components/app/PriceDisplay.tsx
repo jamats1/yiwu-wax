@@ -2,84 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
-import { getCurrencySymbol, getSiteCurrency } from "@/lib/currency";
-
-const FX_CLIENT_CACHE_TTL_MS = 5 * 60 * 1000;
-
-type FxRateResponse = {
-  rate?: number;
-  to?: string;
-};
-
-type FxCachedRate = {
-  rate: number;
-  to: string;
-  expiresAt: number;
-};
-
-const rateValueCache = new Map<string, FxCachedRate>();
-const inflightRateRequests = new Map<string, Promise<FxCachedRate | null>>();
-
-function pairKey(from: string, to: string): string {
-  return `${from}:${to}`;
-}
-
-async function getFxRate(from: string, to: string): Promise<FxCachedRate | null> {
-  const key = pairKey(from, to);
-  const now = Date.now();
-
-  const cached = rateValueCache.get(key);
-  if (cached && cached.expiresAt > now) {
-    return cached;
-  }
-
-  if (inflightRateRequests.has(key)) {
-    return inflightRateRequests.get(key)!;
-  }
-
-  const requestPromise = (async () => {
-    try {
-      const params = new URLSearchParams({ from, to });
-      const res = await fetch(`/api/fx?${params.toString()}`);
-      if (!res.ok) return null;
-
-      const data = (await res.json()) as FxRateResponse;
-      if (
-        typeof data?.rate !== "number" ||
-        !Number.isFinite(data.rate) ||
-        data.rate <= 0
-      ) {
-        return null;
-      }
-
-      const nextValue: FxCachedRate = {
-        rate: data.rate,
-        to: (data.to || to).toUpperCase(),
-        expiresAt: Date.now() + FX_CLIENT_CACHE_TTL_MS,
-      };
-      rateValueCache.set(key, nextValue);
-      return nextValue;
-    } catch {
-      return null;
-    } finally {
-      inflightRateRequests.delete(key);
-    }
-  })();
-
-  inflightRateRequests.set(key, requestPromise);
-  return requestPromise;
-}
+import { getSiteCurrency } from "@/lib/currency";
+import { fetchFxRate } from "@/lib/use-fx";
 
 interface PriceDisplayProps {
-  /** Base amount stored in Sanity */
+  /** Base amount stored in Sanity (in the base currency, CNY). */
   amount: number;
-  /** Currency code of the stored price, e.g. "USD" */
+  /** Currency code of the stored price, e.g. "CNY". */
   baseCurrency: string;
 }
 
 /**
- * Client-side price display in site currency (USD).
- * Converts from Sanity base currency via /api/fx when needed.
+ * Renders a product price in the visitor's display currency, converting from
+ * the base currency via /api/fx. Falls back to the base amount if FX fails.
  */
 export function PriceDisplay({ amount, baseCurrency }: PriceDisplayProps) {
   const [displayAmount, setDisplayAmount] = useState(amount);
@@ -89,10 +24,9 @@ export function PriceDisplay({ amount, baseCurrency }: PriceDisplayProps) {
 
   useEffect(() => {
     const from = (baseCurrency || getSiteCurrency()).toUpperCase();
-    const targetCurrency = getSiteCurrency();
+    const target = getSiteCurrency();
 
-    // If we can't detect or it's the same as base, just keep base.
-    if (!targetCurrency || targetCurrency === from) {
+    if (!target || target === from) {
       setDisplayAmount(amount);
       setDisplayCurrency(from);
       return;
@@ -100,27 +34,22 @@ export function PriceDisplay({ amount, baseCurrency }: PriceDisplayProps) {
 
     let cancelled = false;
 
-    async function loadRate() {
-      const fx = await getFxRate(from, targetCurrency);
-      if (cancelled || !fx) {
+    (async () => {
+      const rate = await fetchFxRate(from, target);
+      if (cancelled) return;
+      if (rate == null) {
         setDisplayAmount(amount);
         setDisplayCurrency(from);
         return;
       }
-
-      setDisplayAmount(amount * fx.rate);
-      setDisplayCurrency(fx.to);
-    }
-
-    loadRate();
+      setDisplayAmount(amount * rate);
+      setDisplayCurrency(target);
+    })();
 
     return () => {
       cancelled = true;
     };
   }, [amount, baseCurrency]);
 
-  const symbol = getCurrencySymbol(displayCurrency);
-
-  return <span>{formatPrice(displayAmount, symbol)}</span>;
+  return <span>{formatPrice(displayAmount, displayCurrency)}</span>;
 }
-

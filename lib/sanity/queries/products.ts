@@ -1,12 +1,17 @@
 import { groq } from "next-sanity";
+import { fabricPriceGroq } from "@/lib/fabric-types";
 
-// Base product fields
+// Base product fields.
+// `price` is resolved to the base RMB price (override → fabric type → legacy),
+// and `currency` is always the base currency (CNY) so every consumer converts
+// consistently via PriceDisplay / the FX hook.
 const PRODUCT_FIELDS = `
   _id,
   name,
   slug,
-  price,
-  currency,
+  "price": ${fabricPriceGroq()},
+  "currency": "CNY",
+  fabricType,
   images,
   availability,
   material,
@@ -18,6 +23,9 @@ const PRODUCT_FIELDS = `
   }
 `;
 
+// Resolved base RMB price, reused for filtering and sorting.
+const RESOLVED_PRICE = fabricPriceGroq();
+
 // Common filter conditions (always include all filters, use empty string defaults)
 const PRODUCT_FILTER_CONDITIONS = `
   _type == "product"
@@ -25,8 +33,8 @@ const PRODUCT_FILTER_CONDITIONS = `
   && ($categorySlug == "" || category->slug.current == $categorySlug)
   && ($color == "" || $color in colors)
   && ($material == "" || material == $material)
-  && ($minPrice == 0 || price >= $minPrice)
-  && ($maxPrice == 0 || price <= $maxPrice)
+  && ($minPrice == 0 || ${RESOLVED_PRICE} >= $minPrice)
+  && ($maxPrice == 0 || ${RESOLVED_PRICE} <= $maxPrice)
   && ($searchQuery == "" || name match $searchQuery + "*" || description match $searchQuery + "*")
   && ($inStock == false || stock > 0)
 `;
@@ -55,14 +63,14 @@ export const FILTER_PRODUCTS_BY_NEWEST_QUERY = groq`
 
 // Filter products by price ascending
 export const FILTER_PRODUCTS_BY_PRICE_ASC_QUERY = groq`
-  *[${PRODUCT_FILTER_CONDITIONS}] | order(price asc) {
+  *[${PRODUCT_FILTER_CONDITIONS}] | order(${RESOLVED_PRICE} asc) {
     ${PRODUCT_FIELDS}
   }
 `;
 
 // Filter products by price descending
 export const FILTER_PRODUCTS_BY_PRICE_DESC_QUERY = groq`
-  *[${PRODUCT_FILTER_CONDITIONS}] | order(price desc) {
+  *[${PRODUCT_FILTER_CONDITIONS}] | order(${RESOLVED_PRICE} desc) {
     ${PRODUCT_FIELDS}
   }
 `;

@@ -13,6 +13,7 @@ import {
 import { useCartStore } from "@/lib/store/cart-store";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { CurrencySwitcher } from "@/components/app/CurrencySwitcher";
 
 const navLinks = [
   { label: "Shop", href: "/products" },
@@ -75,6 +76,9 @@ export function Header() {
 
         {/* Right actions */}
         <div className="flex items-center gap-1.5">
+          {/* Currency switcher */}
+          <CurrencySwitcher className="hidden sm:block" />
+
           {/* My Orders (signed-in, desktop only) */}
           <SignedIn>
             <Link

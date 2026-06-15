@@ -5,18 +5,35 @@ import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ChevronRight, Loader2, Lock } from "lucide-react";
-import { formatMoney } from "@/lib/currency";
+import { ChevronRight, Loader2, Lock, Ship, Plane, Store } from "lucide-react";
+import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
+import { useFx } from "@/lib/use-fx";
+import { calcProcessingFee, PROCESSING_FEE } from "@/lib/fees";
 import { TrustBadges } from "@/components/app/TrustBadges";
 import { CartTimer } from "@/components/app/CartTimer";
 import { trackBeginCheckout } from "@/lib/analytics";
+import {
+  calculateShipping,
+  getAllShippingQuotes,
+  type ShippingMethod,
+} from "@/lib/shipping";
+
+// Goods are priced in CNY; shipping rates are quoted in USD.
+const SHIPPING_CURRENCY = "USD";
+
+const SHIPPING_ICONS: Record<ShippingMethod, typeof Ship> = {
+  sea: Ship,
+  air: Plane,
+  pickup: Store,
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, isLoaded: userLoaded } = useUser();
-  const { items, getTotal } = useCartStore();
+  const { items, getTotal, getItemCount } = useCartStore();
   const [loading, setLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("sea");
   const [formData, setFormData] = useState({
     email: "",
     name: "",
@@ -26,7 +43,21 @@ export default function CheckoutPage() {
     country: "",
   });
 
-  const total = getTotal();
+  const { currency, convert } = useFx([BASE_CURRENCY, SHIPPING_CURRENCY]);
+
+  const totalPieces = getItemCount();
+  const shippingQuotes = getAllShippingQuotes(totalPieces, formData.country);
+  const shipping = calculateShipping(shippingMethod, totalPieces, formData.country);
+
+  // Everything below is in the visitor's display currency.
+  const subtotal = convert(getTotal(), BASE_CURRENCY);
+  const shippingDisplay = convert(shipping.amount, SHIPPING_CURRENCY);
+  const usdRate = convert(1, SHIPPING_CURRENCY); // 1 USD -> display currency
+  const processingFee = calcProcessingFee(subtotal + shippingDisplay, usdRate);
+  const total = subtotal + shippingDisplay + processingFee;
+
+  // Shipping prices shown in the selector, converted to display currency.
+  const money = (amount: number, from: string) => formatMoney(convert(amount, from), currency);
 
   useEffect(() => {
     if (!userLoaded || !user) return;
@@ -68,6 +99,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items,
           customerInfo: formData,
+          shippingMethod,
+          currency,
         }),
       });
 
@@ -243,6 +276,65 @@ export default function CheckoutPage() {
                 />
               </div>
 
+              <fieldset className="space-y-3">
+                <legend className="mb-1 block text-sm font-semibold text-gray-800">
+                  Shipping method
+                </legend>
+                {shippingQuotes.map((quote) => {
+                  const Icon = SHIPPING_ICONS[quote.method];
+                  const selected = quote.method === shippingMethod;
+                  return (
+                    <label
+                      key={quote.method}
+                      className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition ${
+                        selected
+                          ? "border-primary bg-primary/5"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="shippingMethod"
+                        value={quote.method}
+                        checked={selected}
+                        onChange={() => setShippingMethod(quote.method)}
+                        className="mt-1 h-4 w-4 shrink-0 accent-primary"
+                      />
+                      <Icon
+                        className={`mt-0.5 h-5 w-5 shrink-0 ${
+                          selected ? "text-primary" : "text-gray-400"
+                        }`}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-gray-900">{quote.label}</span>
+                          <span className="shrink-0 font-bold text-gray-900">
+                            {quote.amount > 0 ? money(quote.amount, SHIPPING_CURRENCY) : "Free"}
+                          </span>
+                        </span>
+                        <span className="mt-0.5 block text-xs text-gray-500">
+                          {quote.rateNote}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+                {shippingMethod === "air" && (
+                  <p className="text-xs text-gray-500">
+                    Air is billed on weight ({totalPieces} pcs ×{" "}
+                    {(0.92).toFixed(2)} kg). The China rate applies automatically when the
+                    destination country is China.
+                  </p>
+                )}
+                {shippingMethod === "sea" && totalPieces < 100 && (
+                  <p className="text-xs text-gray-500">
+                    Sea freight has a 1-bale (100 pcs) minimum, so the charge covers a full
+                    bale even below 100 pieces.
+                  </p>
+                )}
+              </fieldset>
+
               <button
                 type="submit"
                 disabled={loading}
@@ -279,18 +371,40 @@ export default function CheckoutPage() {
                       <span className="mt-0.5 block text-gray-500">×{item.quantity}</span>
                     </span>
                     <span className="shrink-0 font-semibold text-gray-900">
-                      {formatMoney(item.price * item.quantity, item.currency)}
+                      {money(item.price * item.quantity, item.currency)}
                     </span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-4 border-t border-gray-200 pt-4">
+              <div className="mt-4 space-y-2 border-t border-gray-200 pt-4 text-sm">
+                <div className="flex justify-between text-gray-600">
+                  <span>Subtotal</span>
+                  <span className="font-medium text-gray-900">{formatMoney(subtotal, currency)}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>
+                    Shipping
+                    <span className="text-gray-400"> · {shipping.label}</span>
+                  </span>
+                  <span className="font-medium text-gray-900">
+                    {shipping.amount > 0 ? formatMoney(shippingDisplay, currency) : "Free"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>{PROCESSING_FEE.label}</span>
+                  <span className="font-medium text-gray-900">{formatMoney(processingFee, currency)}</span>
+                </div>
+              </div>
+              <div className="mt-3 border-t border-gray-200 pt-3">
                 <div className="flex justify-between text-xl font-bold text-gray-900 sm:text-2xl">
                   <span>Total</span>
-                  <span>{formatMoney(total)}</span>
+                  <span>{formatMoney(total, currency)}</span>
                 </div>
                 <p className="mt-3 text-xs text-gray-600 sm:text-sm">
-                  Shipping and taxes are confirmed on Stripe before you pay.
+                  Prices shown in {currency}.{" "}
+                  {shipping.method === "pickup"
+                    ? "Collect your order from our Yiwu shop."
+                    : "Final shipping is confirmed with your address on Stripe before you pay."}
                 </p>
               </div>
             </div>
