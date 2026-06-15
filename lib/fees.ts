@@ -12,7 +12,7 @@ export const PROCESSING_FEE = {
   percent: 0.04,
   /** Stripe's fixed per-transaction fee, expressed in USD. */
   fixedUsd: 0.3,
-  label: "Card processing fee",
+  label: "Processing fee",
 } as const;
 
 function round2(n: number): number {

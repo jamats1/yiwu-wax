@@ -48,6 +48,15 @@ export default function CheckoutPage() {
   const totalPieces = getItemCount();
   const shippingQuotes = getAllShippingQuotes(totalPieces, formData.country);
   const shipping = calculateShipping(shippingMethod, totalPieces, formData.country);
+  const seaAvailable = shippingQuotes.find((q) => q.method === "sea")?.available ?? false;
+
+  // Sea needs a full bale (100 pcs); if the cart drops below that, move the
+  // selection to an available method.
+  useEffect(() => {
+    if (shippingMethod === "sea" && !seaAvailable) {
+      setShippingMethod("air");
+    }
+  }, [seaAvailable, shippingMethod]);
 
   // Everything below is in the visitor's display currency.
   const subtotal = convert(getTotal(), BASE_CURRENCY);
@@ -283,13 +292,17 @@ export default function CheckoutPage() {
                 {shippingQuotes.map((quote) => {
                   const Icon = SHIPPING_ICONS[quote.method];
                   const selected = quote.method === shippingMethod;
+                  const disabled = !quote.available;
                   return (
                     <label
                       key={quote.method}
-                      className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition ${
-                        selected
-                          ? "border-primary bg-primary/5"
-                          : "border-gray-200 hover:border-gray-300"
+                      aria-disabled={disabled}
+                      className={`flex items-start gap-3 rounded-xl border-2 p-4 transition ${
+                        disabled
+                          ? "cursor-not-allowed border-gray-200 bg-gray-50 opacity-60"
+                          : selected
+                            ? "cursor-pointer border-primary bg-primary/5"
+                            : "cursor-pointer border-gray-200 hover:border-gray-300"
                       }`}
                     >
                       <input
@@ -297,7 +310,8 @@ export default function CheckoutPage() {
                         name="shippingMethod"
                         value={quote.method}
                         checked={selected}
-                        onChange={() => setShippingMethod(quote.method)}
+                        disabled={disabled}
+                        onChange={() => !disabled && setShippingMethod(quote.method)}
                         className="mt-1 h-4 w-4 shrink-0 accent-primary"
                       />
                       <Icon
@@ -310,29 +324,22 @@ export default function CheckoutPage() {
                         <span className="flex items-center justify-between gap-2">
                           <span className="font-semibold text-gray-900">{quote.label}</span>
                           <span className="shrink-0 font-bold text-gray-900">
-                            {quote.amount > 0 ? money(quote.amount, SHIPPING_CURRENCY) : "Free"}
+                            {disabled
+                              ? "—"
+                              : quote.amount > 0
+                                ? money(quote.amount, SHIPPING_CURRENCY)
+                                : "Free"}
                           </span>
                         </span>
-                        <span className="mt-0.5 block text-xs text-gray-500">
-                          {quote.rateNote}
-                        </span>
+                        {disabled && quote.unavailableReason && (
+                          <span className="mt-0.5 block text-xs text-gray-500">
+                            {quote.unavailableReason}
+                          </span>
+                        )}
                       </span>
                     </label>
                   );
                 })}
-                {shippingMethod === "air" && (
-                  <p className="text-xs text-gray-500">
-                    Air is billed on weight ({totalPieces} pcs ×{" "}
-                    {(0.92).toFixed(2)} kg). The China rate applies automatically when the
-                    destination country is China.
-                  </p>
-                )}
-                {shippingMethod === "sea" && totalPieces < 100 && (
-                  <p className="text-xs text-gray-500">
-                    Sea freight has a 1-bale (100 pcs) minimum, so the charge covers a full
-                    bale even below 100 pieces.
-                  </p>
-                )}
               </fieldset>
 
               <button

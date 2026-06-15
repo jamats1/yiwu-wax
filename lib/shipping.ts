@@ -66,6 +66,10 @@ export interface ShippingQuote {
   amount: number;
   currency: "USD";
   label: string;
+  /** Whether this method can be selected for the current cart. */
+  available: boolean;
+  /** Reason a method is unavailable (shown in the UI when disabled). */
+  unavailableReason?: string;
   /** Short rate description for the UI, e.g. "$430/m³ · min 1 bale". */
   rateNote: string;
   /** Human-readable breakdown of how the amount was reached. */
@@ -94,6 +98,7 @@ export function calculateShipping(
       amount: 0,
       currency: "USD",
       label: "Collect from shop (Yiwu)",
+      available: true,
       rateNote: "Free",
       detail: "Collect your order in person at our Yiwu shop — no shipping charge.",
       billablePieces: qty,
@@ -112,6 +117,7 @@ export function calculateShipping(
       amount,
       currency: "USD",
       label: "Air freight",
+      available: true,
       rateNote: china
         ? `¥${SHIPPING_RATES.airChinaPerKgRmb}/kg (China)`
         : `$${SHIPPING_RATES.airIntlPerKgUsd}/kg`,
@@ -138,6 +144,8 @@ export function calculateShipping(
     amount,
     currency: "USD",
     label: "Sea freight",
+    available: qty >= piecesPerBale,
+    unavailableReason: `Minimum ${piecesPerBale} pieces (1 bale)`,
     rateNote: `$${SHIPPING_RATES.seaPerCbmUsd}/m³ · min 1 bale`,
     detail: `${bales} bale${bales > 1 ? "s" : ""} (${billablePieces} pcs) ≈ ${round2(
       volumeM3,

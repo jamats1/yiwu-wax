@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { formatPrice } from "@/lib/utils";
-import { getSiteCurrency } from "@/lib/currency";
 import { fetchFxRate } from "@/lib/use-fx";
+import { useDisplayCurrency } from "@/lib/use-currency";
 
 interface PriceDisplayProps {
   /** Base amount stored in Sanity (in the base currency, CNY). */
@@ -17,14 +17,12 @@ interface PriceDisplayProps {
  * the base currency via /api/fx. Falls back to the base amount if FX fails.
  */
 export function PriceDisplay({ amount, baseCurrency }: PriceDisplayProps) {
+  const target = useDisplayCurrency();
   const [displayAmount, setDisplayAmount] = useState(amount);
-  const [displayCurrency, setDisplayCurrency] = useState(
-    baseCurrency || getSiteCurrency(),
-  );
+  const [displayCurrency, setDisplayCurrency] = useState(baseCurrency || target);
 
   useEffect(() => {
-    const from = (baseCurrency || getSiteCurrency()).toUpperCase();
-    const target = getSiteCurrency();
+    const from = (baseCurrency || target).toUpperCase();
 
     if (!target || target === from) {
       setDisplayAmount(amount);
@@ -49,7 +47,7 @@ export function PriceDisplay({ amount, baseCurrency }: PriceDisplayProps) {
     return () => {
       cancelled = true;
     };
-  }, [amount, baseCurrency]);
+  }, [amount, baseCurrency, target]);
 
   return <span>{formatPrice(displayAmount, displayCurrency)}</span>;
 }

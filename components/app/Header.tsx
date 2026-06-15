@@ -77,7 +77,7 @@ export function Header() {
         {/* Right actions */}
         <div className="flex items-center gap-1.5">
           {/* Currency switcher */}
-          <CurrencySwitcher className="hidden sm:block" />
+          <CurrencySwitcher />
 
           {/* My Orders (signed-in, desktop only) */}
           <SignedIn>

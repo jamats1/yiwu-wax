@@ -1,29 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  SUPPORTED_CURRENCIES,
-  getSiteCurrency,
-  setCurrencyOverride,
-} from "@/lib/currency";
+import { SUPPORTED_CURRENCIES, setCurrencyOverride } from "@/lib/currency";
+import { useDisplayCurrency } from "@/lib/use-currency";
 
 /**
- * Lets the visitor override the geo-detected display currency. Persists the
- * choice and reloads so server-rendered prices and the FX hook pick it up.
+ * Lets the visitor override the geo-detected display currency. Updates prices
+ * live (via the currencychange event) — no page reload.
  */
 export function CurrencySwitcher({ className }: { className?: string }) {
-  const [currency, setCurrency] = useState<string>("USD");
-
-  // Resolve the real currency on the client (cookie / override / locale).
-  useEffect(() => {
-    setCurrency(getSiteCurrency());
-  }, []);
+  const currency = useDisplayCurrency();
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const next = e.target.value;
-    setCurrency(next);
-    setCurrencyOverride(next);
-    window.location.reload();
+    setCurrencyOverride(e.target.value);
   };
 
   return (

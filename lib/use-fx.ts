@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSiteCurrency } from "@/lib/currency";
+import { useDisplayCurrency } from "@/lib/use-currency";
 
 /**
  * Client-side FX: fetches conversion rates from /api/fx (live, cached) and
@@ -72,7 +72,7 @@ export interface FxConverter {
  * `convert` returns the input unchanged and `ready` is false.
  */
 export function useFx(fromCurrencies: string[]): FxConverter {
-  const [currency, setCurrency] = useState<string>("USD");
+  const currency = useDisplayCurrency();
   const [rates, setRates] = useState<Record<string, number>>({});
   const [ready, setReady] = useState(false);
 
@@ -83,15 +83,14 @@ export function useFx(fromCurrencies: string[]): FxConverter {
 
   useEffect(() => {
     let cancelled = false;
-    const target = getSiteCurrency();
-    setCurrency(target);
+    setReady(false);
 
     const sources = sourcesKey ? sourcesKey.split(",") : [];
 
     (async () => {
       const entries = await Promise.all(
         sources.map(async (from) => {
-          const rate = await fetchFxRate(from, target);
+          const rate = await fetchFxRate(from, currency);
           return [from, rate ?? 1] as const;
         }),
       );
@@ -105,7 +104,7 @@ export function useFx(fromCurrencies: string[]): FxConverter {
     return () => {
       cancelled = true;
     };
-  }, [sourcesKey]);
+  }, [sourcesKey, currency]);
 
   const convert = (amount: number, from: string) => {
     const f = (from || "").toUpperCase();

@@ -22,6 +22,8 @@ export const DEFAULT_DISPLAY_CURRENCY = "USD";
 export const CURRENCY_COOKIE = "currency";
 /** localStorage key holding a visitor's manual override. */
 export const CURRENCY_OVERRIDE_KEY = "currencyOverride";
+/** Window event dispatched when the display currency changes. */
+export const CURRENCY_CHANGE_EVENT = "currencychange";
 
 /** Currencies the storefront offers in the manual switcher. */
 export const SUPPORTED_CURRENCIES = [
@@ -141,6 +143,12 @@ export function setCurrencyOverride(code: string): void {
     /* ignore */
   }
   document.cookie = `${CURRENCY_COOKIE}=${upper}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+  // Notify all price components to re-render in the new currency (no reload).
+  try {
+    window.dispatchEvent(new Event(CURRENCY_CHANGE_EVENT));
+  } catch {
+    /* ignore */
+  }
 }
 
 /** @deprecated Use getSiteCurrency. */
