@@ -45,6 +45,9 @@ export const metadata: Metadata = {
     title: "Yiwu Wax | African Wax Print Fabrics",
     description: defaultDescription,
   },
+  verification: {
+    google: "jODu1tVIyv69cJLx6GD9VzLRDG1JahbJeQ2pDaNsP70",
+  },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     shortcut: "/favicon.svg",
