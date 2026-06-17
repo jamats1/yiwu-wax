@@ -12,6 +12,7 @@ interface Category {
   title: string;
   slug: { current: string };
   image?: any;
+  productCount?: number;
 }
 
 interface CategoryTilesProps {
@@ -52,44 +53,69 @@ export function CategoryTiles({
     }
   }, []);
 
+  // Hide categories with no products; keep empty ones out of the UI
+  const visibleCategories = categories.filter(
+    (c) => !c.productCount || c.productCount > 0,
+  );
+
+  if (visibleCategories.length === 0) return null;
+
   return (
     <div className="w-full mb-12">
-      {/* Horizontal scrolling container - full width with edge padding */}
+      {/* Section label */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">
+          Browse by category
+        </h2>
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              scrollContainerRef.current?.scrollBy({ left: -300, behavior: "smooth" });
+            }}
+            className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+            aria-label="Scroll categories left"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              scrollContainerRef.current?.scrollBy({ left: 300, behavior: "smooth" });
+            }}
+            className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+            aria-label="Scroll categories right"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      {/* Horizontal scrolling container */}
       <div
         ref={scrollContainerRef}
         onWheel={handleWheel}
-        className="flex gap-4 overflow-x-auto overflow-y-hidden pb-4"
+        className="flex gap-3 overflow-x-auto overflow-y-hidden pb-4 snap-x snap-mandatory scrollbar-hide"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {/* All Products tile */}
         <Link
           href="/products"
-          className={`relative flex-shrink-0 w-48 h-32 rounded-xl overflow-hidden group border-2 transition-transform duration-200 ${
+          className={`snap-start relative flex-shrink-0 w-52 h-36 rounded-2xl overflow-hidden group border transition-all duration-200 ${
             !activeCategory
-              ? "border-accent ring-2 ring-accent/60 scale-105"
-              : "border-transparent hover:border-accent/60 hover:scale-105"
+              ? "border-primary/30 ring-2 ring-primary/20 shadow-lg scale-[1.02]"
+              : "border-gray-200 hover:border-primary/40 hover:shadow-md hover:scale-[1.02]"
           }`}
         >
-          {/* Gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-accent to-accent-light" />
-
-          {/* Icon */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Grid2x2 className="h-12 w-12 text-primary opacity-80" />
-          </div>
-
-          {/* Dark overlay for text */}
-          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-
-          {/* Category name */}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-white font-bold text-lg text-center">
-              All Products
-            </h3>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+            <Grid2x2 className="h-8 w-8 text-white/90" />
+            <h3 className="text-white font-bold text-base">All Products</h3>
           </div>
         </Link>
 
         {/* Category tiles */}
-        {categories.map((category) => {
+        {visibleCategories.map((category) => {
           const isActive = activeCategory === category.slug.current;
           const imageUrl = category.image;
 
@@ -97,10 +123,10 @@ export function CategoryTiles({
             <Link
               key={category._id}
               href={`/products?category=${category.slug.current}`}
-              className={`relative flex-shrink-0 w-48 h-32 rounded-xl overflow-hidden group border-2 transition-transform duration-200 ${
+              className={`snap-start relative flex-shrink-0 w-52 h-36 rounded-2xl overflow-hidden group border transition-all duration-200 ${
                 isActive
-                  ? "border-accent ring-2 ring-accent/60 scale-105"
-                  : "border-transparent hover:border-accent/60 hover:scale-105"
+                  ? "border-primary/30 ring-2 ring-primary/20 shadow-lg scale-[1.02]"
+                  : "border-gray-200 hover:border-primary/40 hover:shadow-md hover:scale-[1.02]"
               }`}
             >
               {/* Background image or gradient fallback */}
@@ -109,33 +135,40 @@ export function CategoryTiles({
                   src={urlFor(imageUrl).width(400).height(300).url()}
                   alt={category.title}
                   fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="208px"
+                  loading="lazy"
                 />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-secondary to-secondary-dark" />
+                <div className="absolute inset-0 bg-gradient-to-br from-secondary/80 to-secondary" />
               )}
 
-              {/* Pattern overlay to visually distinguish categories */}
+              {/* Pattern overlay */}
               <div
-                className={`absolute inset-0 opacity-60 mix-blend-soft-light pointer-events-none ${getPatternClass(
+                className={`absolute inset-0 opacity-50 mix-blend-soft-light pointer-events-none ${getPatternClass(
                   category.title,
                 )}`}
               />
 
-              {/* Dark overlay for text readability */}
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
+              {/* Gradient overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
-              {/* Category name */}
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <h3 className="text-white font-bold text-lg text-center">
+              {/* Content */}
+              <div className="absolute inset-0 flex flex-col justify-end p-4">
+                <h3 className="text-white font-bold text-base leading-tight">
                   {category.title}
                 </h3>
+                {category.productCount && (
+                  <p className="text-white/70 text-xs mt-0.5">
+                    {category.productCount} product{category.productCount !== 1 ? "s" : ""}
+                  </p>
+                )}
               </div>
 
               {/* Active indicator */}
               {isActive && (
                 <div className="absolute top-2 right-2">
-                  <div className="h-3 w-3 rounded-full bg-accent border-2 border-white" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-accent border-2 border-white shadow" />
                 </div>
               )}
             </Link>

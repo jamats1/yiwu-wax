@@ -4,13 +4,15 @@ import { useCartStore } from "@/lib/store/cart-store";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronRight, Loader2, Lock, Ship, Plane, Store } from "lucide-react";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
 import { useFx } from "@/lib/use-fx";
+import { useLocation } from "@/lib/context/location-provider";
 import { calcProcessingFee, PROCESSING_FEE } from "@/lib/fees";
 import { TrustBadges } from "@/components/app/TrustBadges";
 import { CartTimer } from "@/components/app/CartTimer";
+import { CheckoutSteps } from "@/components/app/CheckoutSteps";
 import { trackBeginCheckout } from "@/lib/analytics";
 import {
   calculateShipping,
@@ -31,6 +33,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { user, isLoaded: userLoaded } = useUser();
   const { items, getTotal, getItemCount } = useCartStore();
+  const { country, loading: locationLoading } = useLocation();
   const [loading, setLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>("sea");
@@ -44,11 +47,20 @@ export default function CheckoutPage() {
   });
 
   const { currency, convert } = useFx([BASE_CURRENCY, SHIPPING_CURRENCY]);
+  const countryAutoFilled = useRef(false);
 
   const totalPieces = getItemCount();
   const shippingQuotes = getAllShippingQuotes(totalPieces, formData.country);
   const shipping = calculateShipping(shippingMethod, totalPieces, formData.country);
   const seaAvailable = shippingQuotes.find((q) => q.method === "sea")?.available ?? false;
+
+  // Pre-fill the country field from detected location (once, if user hasn't typed anything)
+  useEffect(() => {
+    if (!locationLoading && country && !countryAutoFilled.current) {
+      countryAutoFilled.current = true;
+      setFormData((prev) => ({ ...prev, country }));
+    }
+  }, [locationLoading, country]);
 
   // Sea needs a full bale (100 pcs); if the cart drops below that, move the
   // selection to an available method.
@@ -67,6 +79,7 @@ export default function CheckoutPage() {
 
   // Shipping prices shown in the selector, converted to display currency.
   const money = (amount: number, from: string) => formatMoney(convert(amount, from), currency);
+  const moneyItem = (amount: number) => formatMoney(convert(amount, BASE_CURRENCY), currency);
 
   useEffect(() => {
     if (!userLoaded || !user) return;
@@ -99,6 +112,13 @@ export default function CheckoutPage() {
     setLoading(true);
     setCheckoutError(null);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+      setCheckoutError("Request timed out. Please try again.");
+      setLoading(false);
+    }, 20000); // 20s timeout
+
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -111,21 +131,33 @@ export default function CheckoutPage() {
           shippingMethod,
           currency,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       const data = (await response.json()) as { url?: string; error?: string };
 
       if (!response.ok) {
-        throw new Error(typeof data?.error === "string" ? data.error : "Checkout failed");
+        const msg = typeof data?.error === "string" ? data.error : "Checkout failed";
+        // Provide user-friendly messages for common errors
+        if (msg.includes("unsupported_country")) {
+          throw new Error("Payment temporarily unavailable. Please try again in a moment or contact us on WhatsApp.");
+        }
+        throw new Error(msg);
       }
 
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error("No checkout URL returned");
+        throw new Error("No checkout URL returned. Please try again.");
       }
     } catch (error) {
       console.error("Checkout error:", error);
+      if (error instanceof DOMException && error.name === "AbortError") {
+        // Already handled by timeout
+        return;
+      }
       setCheckoutError(
         error instanceof Error ? error.message : "Failed to create checkout session. Please try again.",
       );
@@ -158,11 +190,13 @@ export default function CheckoutPage() {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary">Step 1 of 2</p>
+            <CheckoutSteps currentStep={0} />
             <h1 className="mt-1 text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl">Your details</h1>
             <p className="mt-2 max-w-xl text-sm text-gray-600">
-              We use this to create your Stripe session. You will confirm delivery address and pay securely on the next
-              step.
+              We use this to create your Stripe session. You will confirm delivery address and pay securely on the next step.
+            </p>
+            <p className="mt-1 text-xs text-green-700 font-medium">
+              ✓ Guest checkout — no account required
             </p>
           </div>
           <Link
@@ -281,6 +315,7 @@ export default function CheckoutPage() {
                   required
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  placeholder={country || "Your country"}
                   className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-3 text-base text-gray-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
@@ -378,7 +413,7 @@ export default function CheckoutPage() {
                       <span className="mt-0.5 block text-gray-500">×{item.quantity}</span>
                     </span>
                     <span className="shrink-0 font-semibold text-gray-900">
-                      {money(item.price * item.quantity, item.currency)}
+                      {moneyItem(item.price * item.quantity)}
                     </span>
                   </li>
                 ))}

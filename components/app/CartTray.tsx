@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,8 @@ import { urlFor } from "@/sanity/lib/image";
 import { cn } from "@/lib/utils";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
 import { useFx } from "@/lib/use-fx";
+import { CartProgress } from "@/components/app/CartProgress";
+import { CartTimer } from "@/components/app/CartTimer";
 
 export function CartTray() {
   const router = useRouter();
@@ -21,9 +23,32 @@ export function CartTray() {
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const { currency, convert } = useFx([BASE_CURRENCY]);
-  const money = (baseAmount: number, from: string = BASE_CURRENCY) =>
-    formatMoney(convert(baseAmount, from), currency);
+  const money = (baseAmount: number) =>
+    formatMoney(convert(baseAmount, BASE_CURRENCY), currency);
+
+  // Mount/unmount with animation delay
+  useEffect(() => {
+    if (isOpen) {
+      setIsMounted(true);
+      // Force reflow then trigger animation
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
+      });
+    } else {
+      setIsVisible(false);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setIsMounted(false), 300);
+    }
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -45,26 +70,41 @@ export function CartTray() {
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isMounted) return null;
 
   const count = getItemCount();
   const total = getTotal();
 
   const goCheckout = () => {
     setCheckoutLoading(true);
-    router.push("/checkout");
+    closeCartTray();
+    // Small delay so the close animation starts before navigation
+    setTimeout(() => router.push("/checkout"), 100);
   };
 
   return (
-    <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Shopping basket">
+    <div
+      className="fixed inset-0 z-[60]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Shopping basket"
+    >
+      {/* Backdrop with fade */}
       <button
         type="button"
         aria-label="Close cart"
-        className="absolute inset-0 bg-black/40"
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
         onClick={closeCartTray}
       />
 
-      <div className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-accent/20 bg-white shadow-2xl">
+      {/* Panel with slide */}
+      <div
+        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-accent/20 bg-white shadow-2xl transition-transform duration-300 ease-out ${
+          isVisible ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
         <div className="flex h-full flex-col p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -126,7 +166,7 @@ export function CartTray() {
                         <div className="flex items-start justify-between gap-2">
                           <p className="line-clamp-2 font-semibold text-gray-900">{item.name}</p>
                           <p className="shrink-0 font-bold text-primary">
-                            {money(item.price * item.quantity, item.currency)}
+                            {money(item.price * item.quantity)}
                           </p>
                         </div>
                         <p className="mt-1 text-sm text-gray-600">
@@ -171,6 +211,16 @@ export function CartTray() {
           </div>
 
           <div className="space-y-3 border-t border-gray-200 pt-4">
+            {/* Free shipping progress */}
+            {items.length > 0 && (
+              <CartProgress
+                totalPieces={items.reduce((sum, i) => sum + i.quantity, 0)}
+              />
+            )}
+
+            {/* Cart timer */}
+            {items.length > 0 && <CartTimer />}
+
             <button
               type="button"
               onClick={goCheckout}

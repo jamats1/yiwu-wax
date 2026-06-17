@@ -1,59 +1,78 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import dynamic from "next/dynamic";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Header } from "@/components/app/Header";
-import { CartTray } from "@/components/app/CartTray";
-import { WhatsAppWidget } from "@/components/app/WhatsAppWidget";
 import { Footer } from "@/components/app/Footer";
 import { NavigationProgress } from "@/components/app/NavigationProgress";
-import { MobileBottomNav } from "@/components/app/MobileBottomNav";
+import { LocationProvider } from "@/lib/context/location-provider";
+import { getLocationFromHeaders, getLocaleFromCountry } from "@/lib/geo/location";
 import { getSiteUrl } from "@/lib/site-url";
 
+// Lazy-load heavy client components — not needed for initial page paint
+const CartTray = dynamic(() => import("@/components/app/CartTray").then((m) => ({ default: m.CartTray })), { loading: () => null });
+const WhatsAppWidget = dynamic(() => import("@/components/app/WhatsAppWidget").then((m) => ({ default: m.WhatsAppWidget })), { loading: () => null });
+const MobileBottomNav = dynamic(() => import("@/components/app/MobileBottomNav").then((m) => ({ default: m.MobileBottomNav })), { loading: () => null });
+
 const META_PIXEL_ID = "2510793769421196";
+const META_PIXEL_ID_2 = "1448525160643476";
 const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID ?? "";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,
+});
 const siteUrl = getSiteUrl();
 
-const defaultDescription =
-  "Shop premium African wax print fabrics — bold patterns, 100% cotton, fast dispatch. Buy by the yard or in 6-yard bundles.";
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const location = await getLocationFromHeaders(headersList);
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: "Yiwu Wax | African Wax Print Fabrics",
-    template: "%s | Yiwu Wax",
-  },
-  description: defaultDescription,
-  alternates: {
-    canonical: "/",
-    languages: { "x-default": siteUrl, en: siteUrl },
-  },
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: siteUrl,
-    siteName: "Yiwu Wax",
-    title: "Yiwu Wax | African Wax Print Fabrics",
-    description: defaultDescription,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Yiwu Wax | African Wax Print Fabrics",
-    description: defaultDescription,
-  },
-  verification: {
-    google: "jODu1tVIyv69cJLx6GD9VzLRDG1JahbJeQ2pDaNsP70",
-  },
-  icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
-  },
-};
+  const title = `Yiwu Wax | African Wax Print Fabrics — ${location.country}`;
+  const description = `Shop premium African wax print fabrics in ${location.country}. Bold patterns, 100% cotton, fast worldwide dispatch. Buy by the yard or in bundles.`;
+  const locale = getLocaleFromCountry(location.countryCode);
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title,
+    description,
+    keywords: [
+      "african wax prints", "ankara fabric", "wax print fabric",
+      location.country, location.city || "",
+      "buy fabric online", "African fashion", "cotton fabric",
+    ].filter(Boolean),
+    alternates: {
+      canonical: "/",
+      languages: { "x-default": siteUrl, [locale]: siteUrl },
+    },
+    openGraph: {
+      type: "website",
+      locale,
+      url: siteUrl,
+      siteName: "Yiwu Wax",
+      title,
+      description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    verification: {
+      google: "jODu1tVIyv69cJLx6GD9VzLRDG1JahbJeQ2pDaNsP70",
+    },
+    icons: {
+      icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+      shortcut: "/favicon.svg",
+      apple: "/favicon.svg",
+    },
+  };
+}
 
 const orgJsonLd = {
   "@context": "https://schema.org",
@@ -86,6 +105,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <ClerkProvider>
       <html lang="en">
         <body className={inter.className}>
+          <LocationProvider>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd).replace(/</g, "\\u003c") }}
@@ -112,6 +132,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`} alt="" />
           </noscript>
 
+          {/* Meta Pixel 2 */}
+          <Script id="meta-pixel-2" strategy="afterInteractive">{`
+            !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
+            n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+            s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+            (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init','${META_PIXEL_ID_2}');
+            fbq('track','PageView');
+          `}</Script>
+          <noscript>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img height="1" width="1" style={{ display: "none" }}
+              src={`https://www.facebook.com/tr?id=${META_PIXEL_ID_2}&ev=PageView&noscript=1`} alt="" />
+          </noscript>
+
           {/* Microsoft Clarity */}
           {CLARITY_ID && (
             <Script id="ms-clarity" strategy="afterInteractive">{`
@@ -132,6 +169,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Footer />
           <WhatsAppWidget />
           <MobileBottomNav />
+          </LocationProvider>
         </body>
         {process.env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />

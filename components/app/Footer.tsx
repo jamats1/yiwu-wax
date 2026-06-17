@@ -29,7 +29,7 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="inline-block">
-              <img src="/logo-dark.svg" alt="Yiwu Wax" className="h-8 w-auto" />
+              <img src="/logo-dark.svg" alt="Yiwu Wax" className="h-8 w-auto" loading="lazy" decoding="async" />
             </Link>
             <p className="mt-4 max-w-xs text-sm text-gray-500 leading-relaxed">
               Premium African wax print fabrics — bold patterns, 100% cotton, fast dispatch from source.

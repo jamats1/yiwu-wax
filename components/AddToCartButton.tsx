@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Minus, Plus, ShoppingBag } from "lucide-react";
 import { trackAddToCart } from "@/lib/analytics";
+import { BASE_CURRENCY } from "@/lib/currency";
 
 interface Product {
   _id: string;
@@ -61,7 +62,7 @@ export default function AddToCartButton({
       name: cartName,
       slug: product.slug.current,
       price: unitPrice,
-      currency: product.currency,
+      currency: BASE_CURRENCY,
       image: product.images[0],
       quantity,
     });
@@ -82,7 +83,7 @@ export default function AddToCartButton({
       name: cartName,
       slug: product.slug.current,
       price: unitPrice,
-      currency: product.currency,
+      currency: BASE_CURRENCY,
       image: product.images[0],
       quantity,
     });

@@ -6,9 +6,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { urlFor } from "@/sanity/lib/image";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Truck, Shield, RotateCcw } from "lucide-react";
 import { formatMoney, BASE_CURRENCY } from "@/lib/currency";
 import { useFx } from "@/lib/use-fx";
+import { CartProgress } from "@/components/app/CartProgress";
+import { CartTimer } from "@/components/app/CartTimer";
 
 export default function CartPage() {
   const router = useRouter();
@@ -18,8 +20,8 @@ export default function CartPage() {
   const { currency, convert } = useFx([BASE_CURRENCY]);
   const totalBase = getTotal();
   const total = convert(totalBase, BASE_CURRENCY);
-  const money = (baseAmount: number, from: string = BASE_CURRENCY) =>
-    formatMoney(convert(baseAmount, from), currency);
+  const money = (baseAmount: number) =>
+    formatMoney(convert(baseAmount, BASE_CURRENCY), currency);
 
   const handleCheckout = () => {
     setCheckoutLoading(true);
@@ -98,11 +100,11 @@ export default function CartPage() {
                             </h2>
                           </Link>
                           <p className="mt-1 text-sm text-gray-600">
-                            {money(item.price, item.currency)} each
+                            {money(item.price)} each
                           </p>
                         </div>
                         <p className="text-xl font-bold text-primary sm:text-right sm:text-2xl">
-                          {money(item.price * item.quantity, item.currency)}
+                          {money(item.price * item.quantity)}
                         </p>
                       </div>
                       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -143,6 +145,17 @@ export default function CartPage() {
           <div className="lg:col-span-1">
             <div className="sticky top-20 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:top-24">
               <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Order summary</h2>
+
+              {/* Cart timer */}
+              <div className="mt-4">
+                <CartTimer />
+              </div>
+
+              {/* Free shipping progress */}
+              <CartProgress
+                totalPieces={items.reduce((sum, i) => sum + i.quantity, 0)}
+              />
+
               <div className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between text-gray-700">
                   <span>Subtotal</span>
@@ -175,6 +188,11 @@ export default function CartPage() {
                   "Proceed to checkout"
                 )}
               </button>
+              <div className="mt-6 flex items-center gap-4 text-xs text-gray-500 justify-center">
+                <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" /> Fast dispatch</span>
+                <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> Secure checkout</span>
+                <span className="flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5" /> Easy returns</span>
+              </div>
             </div>
           </div>
         </div>

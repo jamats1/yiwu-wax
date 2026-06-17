@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Heart } from "lucide-react";
 import {
   SignedIn,
   SignedOut,
@@ -11,6 +11,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { useCartStore } from "@/lib/store/cart-store";
+import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CurrencySwitcher } from "@/components/app/CurrencySwitcher";
@@ -21,6 +22,24 @@ const navLinks = [
   { label: "FAQ", href: "/faq" },
   { label: "Contact", href: "/contact" },
 ];
+
+function WishlistLink() {
+  const wishlistCount = useWishlistStore((s) => s.items.length);
+  return (
+    <Link
+      href="/wishlist"
+      className="relative flex h-9 w-9 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      aria-label={`Wishlist (${wishlistCount} items)`}
+    >
+      <Heart className="h-[18px] w-[18px]" />
+      {wishlistCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-red-500 text-[9px] font-bold leading-none text-white">
+          {wishlistCount > 9 ? "9+" : wishlistCount}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export function Header() {
   const pathname = usePathname();
@@ -78,6 +97,9 @@ export function Header() {
         <div className="flex items-center gap-1.5">
           {/* Currency switcher */}
           <CurrencySwitcher />
+
+          {/* Wishlist */}
+          <WishlistLink />
 
           {/* My Orders (signed-in, desktop only) */}
           <SignedIn>

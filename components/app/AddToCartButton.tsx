@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Minus, Plus, ShoppingBag, Loader2 } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { cn } from "@/lib/utils";
-import { SITE_CURRENCY } from "@/lib/currency";
+import { BASE_CURRENCY } from "@/lib/currency";
 
 interface AddToCartButtonProps {
   productId: string;
@@ -24,7 +24,6 @@ export function AddToCartButton({
   image,
   stock,
   slug,
-  currency = SITE_CURRENCY,
   className,
 }: AddToCartButtonProps) {
   const addItem = useCartStore((s) => s.addItem);
@@ -38,6 +37,10 @@ export function AddToCartButton({
   const isOutOfStock = stock <= 0;
   const isAtMax = quantityInCart >= stock;
 
+  // All Sanity prices are in CNY; always store CNY in cart regardless of
+  // what the caller passes, so useFx conversion is never double-applied.
+  const itemCurrency = BASE_CURRENCY;
+
   const handleAdd = () => {
     if (quantityInCart < stock) {
       setIsAdding(true);
@@ -46,7 +49,7 @@ export function AddToCartButton({
         name,
         slug: slug || productId,
         price,
-        currency,
+        currency: itemCurrency,
         image,
         quantity: 1,
       });

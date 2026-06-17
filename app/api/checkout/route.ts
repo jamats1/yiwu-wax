@@ -8,6 +8,7 @@ import {
   DEFAULT_DISPLAY_CURRENCY,
   isSupportedCurrency,
 } from "@/lib/currency";
+import { getSiteUrl } from "@/lib/site-url";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
@@ -115,16 +116,23 @@ export async function POST(request: NextRequest) {
           ]
         : [];
 
+    const origin = getSiteUrl();
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       ...(shippingOptions.length > 0 ? { shipping_options: shippingOptions } : {}),
       line_items: lineItems,
       mode: "payment",
-      success_url: `${request.headers.get("origin")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.headers.get("origin")}/checkout/cancel`,
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout/cancel`,
       customer_email: customerInfo.email,
       shipping_address_collection: {
-        allowed_countries: ["US", "GB", "IE", "NL", "BE", "FR", "DE", "CN"],
+        allowed_countries: [
+          "US", "GB", "IE", "NL", "BE", "FR", "DE", "CN",
+          "ES", "IT", "PT", "AT", "FI", "GR", "LU", "SK", "SI",
+          "EE", "LV", "LT", "CY", "MT", "HR",
+          "CA", "AU", "NG", "GH", "KE", "ZA", "AE",
+        ],
       },
       metadata: {
         customerName: customerInfo.name,

@@ -20,6 +20,12 @@ type CachedRate = FxResult & { expiresAt: number };
 
 const rateCache = new Map<string, CachedRate>();
 
+/** Hardcoded fallback rates for when external FX providers are unreachable (e.g., China VPS). */
+const FALLBACK_RATES: Record<string, Record<string, number>> = {
+  CNY: { USD: 0.138, EUR: 0.127, GBP: 0.109, NGN: 212, CAD: 0.188, AUD: 0.209 },
+  USD: { CNY: 7.25, EUR: 0.92, GBP: 0.79, NGN: 1536, CAD: 1.36, AUD: 1.52 },
+};
+
 function cacheKey(from: string, to: string): string {
   return `${from}:${to}`;
 }
@@ -113,6 +119,12 @@ export async function getFxResult(from: string, to: string): Promise<FxResult & 
   if (fetched) {
     rateCache.set(cacheKey(f, t), { ...fetched, expiresAt: Date.now() + FX_CACHE_TTL_MS });
     return fetched;
+  }
+
+  // Hardcoded fallback — better than rate=1 when providers are unreachable
+  const hardcodedRate = FALLBACK_RATES[f]?.[t];
+  if (hardcodedRate) {
+    return { rate: hardcodedRate, updatedAt: new Date().toISOString(), source: "hardcoded-fallback" };
   }
 
   return { rate: 1, updatedAt: new Date().toISOString(), source: "fallback-identity", degraded: true };

@@ -8,6 +8,11 @@ import { cn } from "@/lib/utils";
 import { AddToCartButton } from "@/components/app/AddToCartButton";
 import { StockBadge } from "@/components/app/StockBadge";
 import { PriceDisplay } from "@/components/app/PriceDisplay";
+import { WishlistButton } from "@/components/app/WishlistButton";
+import { useCartStore } from "@/lib/store/cart-store";
+import { trackAddToCart } from "@/lib/analytics";
+import { ShoppingBag } from "lucide-react";
+import { BASE_CURRENCY } from "@/lib/currency";
 
 interface Product {
   _id: string;
@@ -30,23 +35,63 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const [hoveredImageIndex, setHoveredImageIndex] = useState<number | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const addItem = useCartStore((s) => s.addItem);
+  const openCartTray = useCartStore((s) => s.openCartTray);
 
   const images = product.images ?? [];
   const mainImage = images[0];
-  const displayedImage = hoveredImageIndex !== null 
-    ? images[hoveredImageIndex] 
+  const displayedImage = hoveredImageIndex !== null
+    ? images[hoveredImageIndex]
     : mainImage;
 
   const rawStock = product.stock ?? 0;
   const isOutOfStock = product.availability === "sold_out" || (product.availability !== "in_stock" && rawStock <= 0);
-  // When availability says in_stock but stock field is unset/zero, use a large placeholder so cart logic works
   const stock = isOutOfStock ? 0 : (rawStock > 0 ? rawStock : 999);
   const hasMultipleImages = images.length > 1;
+  const quantityInCart = useCartStore((s) => s.items.find((i) => i.id === product._id)?.quantity ?? 0);
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isOutOfStock) return;
+    addItem({
+      id: product._id,
+      name: product.name,
+      slug: product.slug.current,
+      price: product.price,
+      currency: BASE_CURRENCY,
+      image: mainImage,
+      quantity: 1,
+    });
+    trackAddToCart({ id: product._id, name: product.name, price: product.price, currency: product.currency, quantity: 1 });
+    openCartTray();
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isOutOfStock) return;
+    addItem({
+      id: product._id,
+      name: product.name,
+      slug: product.slug.current,
+      price: product.price,
+      currency: BASE_CURRENCY,
+      image: mainImage,
+      quantity: 1,
+    });
+    trackAddToCart({ id: product._id, name: product.name, price: product.price, currency: product.currency, quantity: 1 });
+    window.location.href = "/checkout";
+  };
 
   return (
     <div data-testid="product-card" className="group relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg">
       {/* Image Container */}
-      <Link href={`/products/${product.slug.current}`} className="relative aspect-square overflow-hidden bg-gray-100">
+      <Link
+        href={`/products/${product.slug.current}`}
+        className="relative aspect-square overflow-hidden bg-gray-100"
+        onMouseEnter={() => !isOutOfStock && setShowQuickAdd(true)}
+        onMouseLeave={() => setShowQuickAdd(false)}
+      >
         {displayedImage ? (
           <Image
             src={urlFor(displayedImage).width(600).height(600).url()}
@@ -64,8 +109,20 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Gradient overlay for text contrast */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
         
+        {/* Wishlist button */}
+        <div className="absolute right-2 top-2 z-10">
+          <WishlistButton
+            productId={product._id}
+            name={product.name}
+            slug={product.slug.current}
+            price={product.price}
+            currency={product.currency}
+            image={mainImage}
+          />
+        </div>
+
         {/* Badges */}
-        <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
+        <div className="absolute left-2 top-10 z-10 flex flex-col gap-2">
           {isOutOfStock && (
             <span className="inline-flex items-center rounded-md bg-red-500 px-2 py-1 text-xs font-semibold text-white">
               Out of Stock
@@ -77,6 +134,24 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
         </div>
+
+        {/* Quick-add overlay */}
+        {!isOutOfStock && (
+          <div
+            className={`absolute bottom-0 left-0 right-0 z-20 p-3 bg-gradient-to-t from-black/80 to-transparent transition-all duration-200 ${
+              showQuickAdd ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={handleQuickAdd}
+              className="w-full bg-accent text-primary py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-accent-light transition-colors"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              Quick Add to Cart
+            </button>
+          </div>
+        )}
 
         {/* Thumbnail strip - only show if multiple images */}
         {hasMultipleImages && (
@@ -125,7 +200,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Add to Cart Button */}
-        <div className="mt-4">
+        <div className="mt-4 space-y-2">
           <AddToCartButton
             productId={product._id}
             name={product.name}
@@ -135,6 +210,16 @@ export function ProductCard({ product }: ProductCardProps) {
             slug={product.slug?.current || product._id}
             currency={product.currency || "USD"}
           />
+          {!isOutOfStock && quantityInCart === 0 && (
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              Buy Now
+            </button>
+          )}
         </div>
       </div>
     </div>

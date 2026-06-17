@@ -2,20 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Grid2X2, ShoppingBag, User } from "lucide-react";
+import { Home, Grid2X2, ShoppingBag, User, Heart } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
+import { useWishlistStore } from "@/lib/store/wishlist-store";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
   { label: "Home", href: "/", icon: Home, exact: true },
   { label: "Shop", href: "/products", icon: Grid2X2, exact: false },
+  { label: "Wishlist", href: "/wishlist", icon: Heart, exact: false },
 ];
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const itemCount = useCartStore((s) => s.getItemCount());
   const openCartTray = useCartStore((s) => s.openCartTray);
+  const wishlistCount = useWishlistStore((s) => s.items.length);
 
   const isActive = (href: string, exact: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
@@ -28,16 +31,24 @@ export function MobileBottomNav() {
     >
       {navLinks.map(({ label, href, icon: Icon, exact }) => {
         const active = isActive(href, exact);
+        const isWishlist = href === "/wishlist";
         return (
           <Link
             key={href}
             href={href}
             className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors",
+              "relative flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors",
               active ? "text-primary" : "text-gray-400",
             )}
           >
-            <Icon className="h-5 w-5" />
+            <span className="relative">
+              <Icon className="h-5 w-5" />
+              {isWishlist && wishlistCount > 0 && (
+                <span className="absolute -right-2 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold leading-none text-white">
+                  {wishlistCount > 9 ? "9+" : wishlistCount}
+                </span>
+              )}
+            </span>
             {label}
           </Link>
         );

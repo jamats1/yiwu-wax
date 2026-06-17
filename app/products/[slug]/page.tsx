@@ -18,6 +18,11 @@ import { StickyProductCTA } from "@/components/app/StickyProductCTA";
 import { RequestQuoteButton } from "@/components/app/RequestQuoteButton";
 import { ProductViewTracker } from "@/components/app/ProductViewTracker";
 import { WhatsAppWidget } from "@/components/app/WhatsAppWidget";
+import { SizeGuidance } from "@/components/app/SizeGuidance";
+import { UrgencyBadge, SocialProofBadge, ShipsTodayBadge, DeliveryEstimate } from "@/components/app/UrgencyBadge";
+import { BackInStockNotifier } from "@/components/app/BackInStockNotifier";
+import { WishlistButton } from "@/components/app/WishlistButton";
+import { RecentlyViewedTracker } from "@/components/app/RecentlyViewed";
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import { RELATED_PRODUCTS_QUERY } from "@/lib/sanity/queries/products";
@@ -148,14 +153,35 @@ export default async function ProductPage({ params }: { params: { slug: string }
               <p className="text-xs font-semibold uppercase tracking-wider text-primary">
                 {product.category?.title ?? "African wax print fabric"}
               </p>
-              <h1 className="mt-2 text-balance text-2xl font-bold leading-tight text-gray-900 sm:text-3xl md:text-4xl">
+              <h1 className="mt-2 text-balance text-2xl font-bold leading-tight text-gray-900 sm:text-3xl md:text-4xl flex items-center gap-3">
                 {product.name}
+                <WishlistButton
+                  productId={product._id}
+                  name={product.name}
+                  slug={product.slug.current}
+                  price={product.price}
+                  currency={product.currency}
+                  image={product.images?.[0]}
+                  size="md"
+                />
               </h1>
 
-              {/* Social proof line */}
-              <p className="mt-2 text-xs text-gray-500">
-                Ordered by buyers in 🇺🇸 USA · 🇬🇧 UK · 🇨🇦 Canada · 🇳🇬 Nigeria · 🇬🇭 Ghana · 🇿🇦 South Africa
-              </p>
+              {/* Social proof + urgency row */}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <p className="text-xs text-gray-500">
+                  Ordered by 🇺🇸 USA · 🇬🇧 UK · 🇳🇬 Nigeria · 🇬🇭 Ghana · 🇿🇦 South Africa
+                </p>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <UrgencyBadge stock={stock} />
+                <SocialProofBadge />
+                {!isSoldOut && <ShipsTodayBadge />}
+              </div>
+              {!isSoldOut && (
+                <div className="mt-2">
+                  <DeliveryEstimate />
+                </div>
+              )}
 
               {/* Price */}
               <div className="mt-5 rounded-xl bg-gray-50 px-4 py-4 sm:px-5">
@@ -184,24 +210,21 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 </li>
               </ul>
 
-              {/* Stock status */}
-              <div className="mt-5 rounded-xl border border-primary/15 bg-primary/[0.04] px-4 py-3 text-sm" role="status">
-                <p className="font-medium text-gray-900">
-                  {!isSoldOut ? (
-                    <>
-                      In stock
-                      {stock > 0 && stock <= 10 && (
-                        <span className="text-amber-700"> — only {stock} left</span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-red-700">Sold out</span>
-                  )}
-                </p>
-                <p className="mt-1 text-gray-600">
-                  Each piece is a standard 6-yard cut. Order multiple pieces for more yardage.
-                </p>
-              </div>
+              {/* Stock status + Size Guidance */}
+              {isSoldOut ? (
+                <div className="mt-5">
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm mb-4">
+                    <p className="font-medium text-red-700">Sold out</p>
+                  </div>
+                  <BackInStockNotifier productId={product._id} productName={product.name} />
+                </div>
+              ) : (
+                <SizeGuidance
+                  productName={product.name}
+                  stock={stock}
+                  className="mt-5"
+                />
+              )}
 
               {/* CTAs */}
               <div id="add-to-cart-section" className="mt-6 space-y-3 border-t border-gray-100 pt-6">
@@ -294,6 +317,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       {/* Related Products */}
       <RelatedProducts products={relatedProducts} categoryTitle={product.category?.title} />
+
+      {/* Track this view for recently viewed */}
+      <RecentlyViewedTracker productId={product._id} slug={product.slug.current} />
 
       {/* Sticky bar — fires when add-to-cart section scrolls out of view */}
       <StickyProductCTA

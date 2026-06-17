@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ShoppingBag, MessageCircle } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { InquiryModal } from "@/components/app/InquiryModal";
+import { BASE_CURRENCY } from "@/lib/currency";
 
 interface StickyProduct {
   _id: string;
@@ -49,7 +50,7 @@ export function StickyProductCTA({
       name: product.name,
       slug: product.slug.current,
       price: product.price,
-      currency: product.currency,
+      currency: BASE_CURRENCY,
       image: product.images[0],
       quantity: 1,
     });
