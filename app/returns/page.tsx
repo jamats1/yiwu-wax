@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import { RotateCcw, AlertTriangle, Clock, MessageCircle } from "lucide-react";
+import { ReturnsWhatsAppButton } from "@/components/app/ReturnsWhatsAppButton";
 
 export const metadata: Metadata = {
   title: "Returns & Refunds",
@@ -97,14 +98,7 @@ export default function ReturnsPage() {
             Our team responds within a few hours on WhatsApp, or within 1 business day by email.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <a
-              href="https://wa.me/8618157977478?text=Hi%2C%20I%20have%20a%20question%20about%20a%20return."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#20b558]"
-            >
-              WhatsApp us
-            </a>
+            <ReturnsWhatsAppButton />
             <a
               href="/contact"
               className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"

@@ -4,35 +4,45 @@ import { useState, useRef, useEffect } from "react";
 import { X, MessageCircle, Package, Truck, ChevronDown } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 
-const NUMBER = "8618157977478";
+const NUMBER = "8618058542270";
 
 const ACTIONS = [
   {
     icon: MessageCircle,
     label: "Request a quote",
-    message: (product?: string) =>
-      product
-        ? `Hi! I'd like a wholesale quote for "${product}". Can you help?`
-        : "Hi! I'd like to request a product quote. Can you help?",
+    message: (product?: string, pageUrl?: string) => {
+      const base = product
+        ? `Hi! I'd like a wholesale quote for "${product}".`
+        : "Hi! I'd like to request a product quote.";
+      return `${base} I'm reaching out from ${pageUrl}. Can you help?`;
+    },
   },
   {
     icon: Truck,
     label: "Ask about shipping",
-    message: () => "Hi! Can you tell me about shipping options and delivery times to my country?",
+    message: (_product?: string, pageUrl?: string) =>
+      `Hi! Can you tell me about shipping options and delivery times to my country? I'm reaching out from ${pageUrl}.`,
   },
   {
     icon: Package,
     label: "Request a sample",
-    message: (product?: string) =>
-      product
+    message: (product?: string, pageUrl?: string) => {
+      const base = product
         ? `Hi! I'd like to request a sample of "${product}" before placing a bulk order.`
-        : "Hi! I'd like to request a fabric sample before placing a bulk order.",
+        : "Hi! I'd like to request a fabric sample before placing a bulk order.";
+      return `${base} I found this from ${pageUrl}.`;
+    },
   },
 ];
 
 export function WhatsAppWidget({ productName }: { productName?: string }) {
   const [open, setOpen] = useState(false);
+  const [pageUrl, setPageUrl] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setPageUrl(window.location.href);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
@@ -96,7 +106,7 @@ export function WhatsAppWidget({ productName }: { productName?: string }) {
               <button
                 key={label}
                 type="button"
-                onClick={() => handleAction(message(productName))}
+                onClick={() => handleAction(message(productName, pageUrl))}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 <Icon className="h-4 w-4 shrink-0 text-[#25D366]" aria-hidden />

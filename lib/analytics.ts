@@ -1,12 +1,19 @@
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
+    fbq?: (...args: unknown[]) => void;
   }
 }
 
 function gtag(...args: unknown[]) {
   if (typeof window !== "undefined" && typeof window.gtag === "function") {
     window.gtag(...args);
+  }
+}
+
+function fbq(...args: unknown[]) {
+  if (typeof window !== "undefined" && typeof window.fbq === "function") {
+    window.fbq(...args);
   }
 }
 
@@ -29,6 +36,15 @@ export function trackViewItem(product: {
         quantity: 1,
       },
     ],
+  });
+
+  // Meta Pixel: ViewContent
+  fbq("track", "ViewContent", {
+    content_ids: [product._id],
+    content_name: product.name,
+    content_type: "product",
+    value: product.price,
+    currency: product.currency || "USD",
   });
 }
 
@@ -53,6 +69,16 @@ export function trackAddToCart(item: {
       },
     ],
   });
+
+  // Meta Pixel: AddToCart
+  fbq("track", "AddToCart", {
+    content_ids: [item.id],
+    content_name: item.name,
+    content_type: "product",
+    value: item.price * item.quantity,
+    currency: item.currency || "USD",
+    num_items: item.quantity,
+  });
 }
 
 export function trackBeginCheckout(
@@ -74,6 +100,15 @@ export function trackBeginCheckout(
       price: item.price,
       quantity: item.quantity,
     })),
+  });
+
+  // Meta Pixel: InitiateCheckout
+  fbq("track", "InitiateCheckout", {
+    content_ids: cartItems.map((i) => i.id),
+    content_type: "product",
+    value: total,
+    currency: "USD",
+    num_items: cartItems.length,
   });
 }
 
@@ -109,5 +144,15 @@ export function trackPurchase(
       price: item.price,
       quantity: item.quantity,
     })),
+  });
+
+  // Meta Pixel: Purchase
+  fbq("track", "Purchase", {
+    content_ids: cartItems.map((i) => i.id),
+    content_type: "product",
+    value: total,
+    currency: "USD",
+    num_items: cartItems.reduce((sum, i) => sum + i.quantity, 0),
+    order_id: transactionId,
   });
 }

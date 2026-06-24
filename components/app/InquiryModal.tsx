@@ -82,11 +82,11 @@ export function InquiryModal({ product, open, onClose }: Props) {
       });
 
       const msg = encodeURIComponent(
-        `Hi! I submitted an inquiry for "${product.name}".\n` +
+        `Hi! I submitted an inquiry for "${product.name}" from ${window.location.href}.\n` +
         `Name: ${form.name}\nCompany: ${form.company || "N/A"}\nCountry: ${form.country}\n` +
         `Quantity: ${form.quantity} pieces\n${form.notes ? `Notes: ${form.notes}` : ""}`,
       );
-      setWhatsappUrl(`https://wa.me/8618157977478?text=${msg}`);
+      setWhatsappUrl(`https://wa.me/8618058542270?text=${msg}`);
       setStep("success");
     } catch {
       setError("Something went wrong. Please try again.");

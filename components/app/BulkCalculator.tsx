@@ -30,9 +30,9 @@ export function BulkCalculator({ price, currency, productName }: Props) {
   const savings = (price - unitPrice) * qty;
 
   const whatsappMsg = encodeURIComponent(
-    `Hi! I'm interested in a wholesale quote for ${qty} pieces of "${productName}". Can you send me a price?`,
+    `Hi! I'm interested in a wholesale quote for ${qty} pieces of "${productName}". I found this from ${window.location.href}. Can you send me a price?`,
   );
-  const whatsappUrl = `https://wa.me/8618157977478?text=${whatsappMsg}`;
+  const whatsappUrl = `https://wa.me/8618058542270?text=${whatsappMsg}`;
 
   return (
     <section className="mt-10 rounded-2xl border border-gray-200 bg-white p-6">

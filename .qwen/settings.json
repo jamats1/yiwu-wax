@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/jama_furniture/**)",
+      "Bash(find *)"
+    ]
+  },
+  "$version": 4
+}

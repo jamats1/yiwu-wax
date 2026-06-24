@@ -1,16 +1,26 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, MessageCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const WHATSAPP_NUMBER = "8618157977478";
-const WHATSAPP_BULK = "Hi! I'd like a custom quote for a bulk fabric order.";
+const WHATSAPP_NUMBER = "8618058542270";
 
 interface PromoBannerProps {
   variant?: "quote" | "shipping" | "sale";
 }
 
 export function PromoBanner({ variant = "quote" }: PromoBannerProps) {
+  const [pageUrl, setPageUrl] = useState("");
+
+  useEffect(() => {
+    setPageUrl(window.location.href);
+  }, []);
+
   if (variant === "quote") {
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_BULK)}`;
+    const whatsappUrl = pageUrl
+      ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi! I'd like a custom quote for a bulk fabric order. I found you from ${pageUrl}.`)}`
+      : `https://wa.me/${WHATSAPP_NUMBER}`;
     return (
       <div className="w-full my-12 rounded-2xl overflow-hidden bg-gradient-to-r from-primary-dark to-primary text-white relative">
         <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12 py-10 sm:py-14 flex flex-col md:flex-row items-center gap-6 md:gap-10">
@@ -82,7 +92,7 @@ export function PromoBanner({ variant = "quote" }: PromoBannerProps) {
           </p>
         </div>
         <a
-          href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi! I want to be notified about new fabric arrivals.")}`}
+          href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi! I want to be notified about new fabric arrivals. I found you from ${pageUrl || window.location.href}.`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-white text-red-600 px-7 py-3.5 rounded-xl font-bold text-base hover:bg-gray-100 transition-all shadow-lg"

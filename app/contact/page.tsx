@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
-import { MessageCircle, Mail } from "lucide-react";
-
-const WHATSAPP_NUMBER = "8618157977478";
-const WHATSAPP_MESSAGE = "Hi! I'd like to know more about your African wax print fabrics.";
+import { Mail } from "lucide-react";
+import { WhatsAppContactButton } from "@/components/app/WhatsAppContactButton";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -24,8 +22,6 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
-
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="mx-auto max-w-2xl px-4 py-16 sm:py-20">
@@ -37,22 +33,8 @@ export default function ContactPage() {
         </p>
 
         <div className="space-y-4">
-          {/* WhatsApp */}
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-5 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
-          >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#25D366]">
-              <MessageCircle className="h-6 w-6 text-white" />
-            </span>
-            <div>
-              <p className="font-semibold text-gray-900">WhatsApp</p>
-              <p className="text-sm text-gray-500">Fastest way to reach us — chat now</p>
-              <p className="mt-0.5 text-sm font-medium text-[#25D366]">+86 181 5797 7478</p>
-            </div>
-          </a>
+          {/* WhatsApp — client component for dynamic URL */}
+          <WhatsAppContactButton />
 
           {/* Email */}
           <a

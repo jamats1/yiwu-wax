@@ -9,6 +9,7 @@ import {
   isSupportedCurrency,
 } from "@/lib/currency";
 import { getSiteUrl } from "@/lib/site-url";
+import { trackCartEvent } from "@/lib/tracker";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
@@ -118,6 +119,33 @@ export async function POST(request: NextRequest) {
 
     const origin = getSiteUrl();
 
+    // Capture cart to Sanity before creating Stripe session (for abandoned cart tracking)
+    const cartItems = items.map((item: any) => ({
+      productId: item.id || "",
+      productName: item.name,
+      quantity: item.quantity || 1,
+      price: (item.price || 0) * goodsRate,
+      currency: target,
+    }));
+
+    const totalValue = goodsInTarget + shippingInTarget + processingFee;
+
+    const cartEventDoc = await trackCartEvent({
+      sessionId: items[0]?.sessionId || "",
+      eventType: "begin_checkout",
+      email: customerInfo?.email,
+      customerName: customerInfo?.name,
+      phone: customerInfo?.phone,
+      items: cartItems,
+      totalValue,
+      currency: target,
+      source: request.headers.get("x-traffic-source") || undefined,
+      country:
+        request.headers.get("cf-ipcountry") ||
+        request.headers.get("x-vercel-ip-country") ||
+        undefined,
+    });
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       ...(shippingOptions.length > 0 ? { shipping_options: shippingOptions } : {}),
@@ -142,8 +170,20 @@ export async function POST(request: NextRequest) {
         shippingLabel: shipping.label,
         shippingAmount: shippingInTarget.toFixed(2),
         processingFee: processingFee.toFixed(2),
+        cartEventId: cartEventDoc._id,
       },
     });
+
+    // Update the cart event with the Stripe session ID
+    try {
+      const { writeClient } = await import("@/sanity/lib/client");
+      await writeClient.patch(cartEventDoc._id).set({
+        stripeSessionId: session.id,
+        eventType: "cart_captured",
+      }).commit();
+    } catch {
+      // Non-critical — don't fail the checkout
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (error: any) {

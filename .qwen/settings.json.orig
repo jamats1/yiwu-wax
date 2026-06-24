@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/jama_furniture/**)"
+    ]
+  },
+  "$version": 4
+}

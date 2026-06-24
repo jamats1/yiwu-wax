@@ -1,22 +1,16 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import dynamic from "next/dynamic";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Header } from "@/components/app/Header";
-import { Footer } from "@/components/app/Footer";
 import { NavigationProgress } from "@/components/app/NavigationProgress";
 import { LocationProvider } from "@/lib/context/location-provider";
 import { getLocationFromHeaders, getLocaleFromCountry } from "@/lib/geo/location";
 import { getSiteUrl } from "@/lib/site-url";
-
-// Lazy-load heavy client components — not needed for initial page paint
-const CartTray = dynamic(() => import("@/components/app/CartTray").then((m) => ({ default: m.CartTray })), { loading: () => null });
-const WhatsAppWidget = dynamic(() => import("@/components/app/WhatsAppWidget").then((m) => ({ default: m.WhatsAppWidget })), { loading: () => null });
-const MobileBottomNav = dynamic(() => import("@/components/app/MobileBottomNav").then((m) => ({ default: m.MobileBottomNav })), { loading: () => null });
+import { PageTracker } from "@/components/app/PageTracker";
+import { SiteChrome } from "@/components/app/SiteChrome";
 
 const META_PIXEL_ID = "2510793769421196";
 const META_PIXEL_ID_2 = "1448525160643476";
@@ -82,7 +76,7 @@ const orgJsonLd = {
   logo: `${siteUrl}/favicon.svg`,
   contactPoint: {
     "@type": "ContactPoint",
-    telephone: "+8618157977478",
+    telephone: "+8618058542270",
     contactType: "customer service",
     availableLanguage: "English",
   },
@@ -161,14 +155,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           )}
 
           <NavigationProgress />
-          <Header />
-          <CartTray />
-          <div className="pb-16 md:pb-0">
-            {children}
-          </div>
-          <Footer />
-          <WhatsAppWidget />
-          <MobileBottomNav />
+          <PageTracker />
+          <SiteChrome>
+            <div className="pb-16 md:pb-0">
+              {children}
+            </div>
+          </SiteChrome>
           </LocationProvider>
         </body>
         {process.env.NEXT_PUBLIC_GA_ID && (

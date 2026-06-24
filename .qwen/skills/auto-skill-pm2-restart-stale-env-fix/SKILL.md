@@ -47,6 +47,8 @@ curl -sI http://localhost:<PORT>
 - `pm2 show <app-name>` says "waiting restart" or shows excessive restart count
 - App builds fine but nginx returns 502 (proxying to wrong/down port)
 
+**Distinguish from corrupted build:** If PM2 logs show `Error: Could not find a production build in the '.next' directory` instead of port errors, the issue is a missing/corrupted `.next` directory — see the `nextjs-pm2-build-recovery` skill for that case.
+
 ## Prevention
 
 Always use `pm2 start ecosystem.config.cjs --only <app>` rather than ad-hoc `pm2 start` commands, as this ensures the config file is the source of truth. If you change env variables in the config, delete + recreate the process rather than relying on restart.

@@ -1,10 +1,18 @@
 "use client";
 
-const WHATSAPP_NUMBER = "8618157977478";
-const PREFILLED_MESSAGE = "Hi! I'd like to know more about your African wax print fabrics.";
+import { useEffect, useState } from "react";
+
+const WHATSAPP_NUMBER = "8618058542270";
 
 export function WhatsAppButton() {
-  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(PREFILLED_MESSAGE)}`;
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    const msg = `Hi! I'm reaching out from ${window.location.href}. I'd like to know more about your African wax print fabrics.`;
+    setUrl(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`);
+  }, []);
+
+  if (!url) return null;
 
   return (
     <a
