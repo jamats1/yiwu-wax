@@ -49,8 +49,6 @@ const navItems = [
   },
 ];
 
-const storeLinks = [];
-
 export default function AdminLayout({
   children,
 }: {
@@ -145,22 +143,6 @@ export default function AdminLayout({
                   </Link>
                 );
               })}
-
-              <div className="px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
-                Store
-              </div>
-              {storeLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-100"
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
-                  <ExternalLink className="ml-auto h-3.5 w-3.5 opacity-50" />
-                </Link>
-              ))}
             </nav>
 
             {/* Footer */}

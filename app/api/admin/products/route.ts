@@ -1,4 +1,4 @@
-import { auth, currentUser } from "next/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { writeClient } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
