@@ -169,17 +169,20 @@ export default defineType({
   preview: {
     select: {
       title: "name",
-      media: "images.0",
+      // Select the whole array, not "images.0": Sanity's preview resolver
+      // (observePaths) refuses to descend into arrays by numeric index, so
+      // an "images.0" media select always comes back undefined (blank thumb).
+      images: "images",
       fabricType: "fabricType",
       priceRmb: "priceRmb",
       price: "price",
     },
-    prepare({ title, media, fabricType, priceRmb, price }) {
+    prepare({ title, images, fabricType, priceRmb, price }) {
       const typePrice = FABRIC_TYPES.find((t) => t.value === fabricType)?.basePriceRmb;
       const rmb = priceRmb ?? typePrice ?? price;
       return {
         title,
-        media,
+        media: Array.isArray(images) ? images[0] : undefined,
         subtitle: rmb ? `¥${rmb}${fabricType ? ` · ${fabricType}` : ""}` : "No price",
       };
     },
