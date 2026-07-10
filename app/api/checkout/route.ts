@@ -151,6 +151,8 @@ export async function POST(request: NextRequest) {
       ...(shippingOptions.length > 0 ? { shipping_options: shippingOptions } : {}),
       line_items: lineItems,
       mode: "payment",
+      // Lets customers enter discount codes created in /admin/discounts
+      allow_promotion_codes: true,
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,
       customer_email: customerInfo.email,

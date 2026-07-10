@@ -6,8 +6,11 @@ import {
   isSupportedCurrency,
 } from "@/lib/currency";
 
-// Only the Sanity Studio requires Clerk auth — everything else is public.
-const isProtectedRoute = createRouteMatcher(["/studio(.*)"]);
+// Sanity Studio and the admin area require Clerk auth — everything else is public.
+// (Admin *authorization* — the email/user-id allowlist — is enforced in the
+// admin layout and in lib/admin-auth.ts for /api/admin routes.)
+const isProtectedRoute = createRouteMatcher(["/studio(.*)", "/admin(.*)"]);
+const isAdminApiRoute = createRouteMatcher(["/api/admin(.*)"]);
 
 // GeoIP country headers, in priority order. Configure your edge/proxy to set
 // one of these (see nginx.conf for the GeoIP2 snippet). Cloudflare and Vercel
@@ -20,7 +23,12 @@ const GEO_COUNTRY_HEADERS = [
 ];
 
 export default clerkMiddleware((auth, request) => {
-  if (isProtectedRoute(request)) {
+  if (isAdminApiRoute(request)) {
+    // API routes should get a 401 JSON response, not a sign-in redirect.
+    if (!auth().userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  } else if (isProtectedRoute(request)) {
     auth().protect();
   }
 

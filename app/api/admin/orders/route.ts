@@ -1,34 +1,13 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { writeClient } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
+import { requireAdmin } from "@/lib/admin-auth";
+import { writeClient } from "@/sanity/lib/client";
 
-function parseCsvList(value: string | undefined): string[] {
-  if (!value) return [];
-  return value.split(",").map((s) => s.trim()).filter(Boolean);
-}
-
-async function isAdmin(userId: string, email: string | null) {
-  const adminAllowAll = process.env.ADMIN_CLERK_ALLOW_ALL === "true";
-  if (adminAllowAll) return true;
-
-  const adminUserIds = parseCsvList(process.env.ADMIN_CLERK_USER_IDS);
-  const adminEmails = parseCsvList(process.env.ADMIN_CLERK_EMAILS);
-  if (adminUserIds.includes(userId)) return true;
-  if (email && adminEmails.includes(email)) return true;
-
-  return false;
-}
+const ORDER_STATUSES = ["pending", "paid", "shipped", "delivered", "cancelled"];
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const user = await currentUser();
-  const email = user?.emailAddresses?.[0]?.emailAddress;
-  if (!(await isAdmin(userId, email || null))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const denied = await requireAdmin();
+  if (denied) return denied;
 
   const orders = await writeClient.fetch(
     groq`*[_type == "order"] | order(_createdAt desc) {
@@ -40,9 +19,30 @@ export async function GET() {
       status,
       email,
       shippingMethod,
+      shippingCost,
+      address,
+      stripePaymentId,
       items[]{ productName, quantity, price }
     }`,
   );
 
   return NextResponse.json({ success: true, orders });
+}
+
+/** Update an order's status. Body: { _id, status } */
+export async function PUT(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
+  const { _id, status } = await req.json();
+  if (!_id) return NextResponse.json({ error: "Missing _id" }, { status: 400 });
+  if (!ORDER_STATUSES.includes(status)) {
+    return NextResponse.json(
+      { error: `Invalid status. Use one of: ${ORDER_STATUSES.join(", ")}` },
+      { status: 400 },
+    );
+  }
+
+  const updated = await writeClient.patch(_id).set({ status }).commit();
+  return NextResponse.json({ success: true, order: updated });
 }

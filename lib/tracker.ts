@@ -94,13 +94,13 @@ export async function trackPurchaseServer(input: {
 async function markCartConverted(email: string, orderId: string) {
   // Find the most recent cart_captured or cart_abandoned event for this email
   // that hasn't been converted yet, and update it
-  const events = await writeClient.fetch<Array<{ _id: string }>>(
-    `*[_type == "cartEvent" && email == $email && eventType in ["cart_captured", "cart_abandoned"] && !defined(orderId)] | order(_createdAt desc)[0]`,
+  const event = await writeClient.fetch<{ _id: string } | null>(
+    `*[_type == "cartEvent" && email == $email && eventType in ["cart_captured", "cart_abandoned"] && !defined(orderId)] | order(_createdAt desc)[0]{ _id }`,
     { email },
   );
 
-  if (events && events.length > 0) {
-    await writeClient.patch(events[0]._id).set({ orderId }).commit();
+  if (event?._id) {
+    await writeClient.patch(event._id).set({ orderId }).commit();
   }
 }
 
